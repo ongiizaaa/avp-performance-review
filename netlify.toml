@@ -1,0 +1,15 @@
+# Static site: no build step on Netlify. site/ is committed already built (python3 tools/build.py).
+[build]
+  publish = "site"
+  command = ""
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+    Referrer-Policy = "no-referrer"

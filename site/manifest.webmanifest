@@ -1,0 +1,26 @@
+{
+  "name": "AVP Performance Review",
+  "short_name": "Performance",
+  "description": "คำนวณผลตอบแทนพอร์ตกองทุนจากไฟล์รายการซื้อขาย กรุงศรี / ฟิลลิป",
+  "lang": "th",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f7fb",
+  "theme_color": "#154681",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "file_handlers": [
+    {
+      "action": "./",
+      "accept": {
+        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"],
+        "application/vnd.ms-excel": [".xls"]
+      }
+    }
+  ],
+  "launch_handler": { "client_mode": "focus-existing" }
+}

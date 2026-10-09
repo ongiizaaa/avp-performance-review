@@ -1,0 +1,925 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#154681">
+<meta name="robots" content="noindex">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" href="icons/favicon-32.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-title" content="Performance Review">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>AVP Performance Review</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Prompt:wght@500;600&display=swap">
+<style>
+/* Layout: two-pane workbench. Input rail on the left (files, account, period, rules), results canvas on the right. Stacks to one column on phones. */
+:root{
+  --bg:#f4f7fb;
+  --surface:#ffffff;
+  --surface-2:#eef4fa;
+  --ink:#13243b;
+  --muted:#5d6b7c;
+  --line:#d8e2ed;
+  --heading:#154681;
+  --brand:#154681;
+  --brand-2:#1e90d6;
+  --on-brand:#ffffff;
+  --accent:#1e90d6;
+  --tint:#e8f4fc;
+  --pos:#15803d;
+  --neg:#b4410f;
+  --flow:#d08a00;
+  --warn-bg:#fff6e5;
+  --warn-ink:#8a5300;
+  --bar-start:#7fa6d6;
+  --bar-end:#154681;
+  --font-display:'Prompt','Sarabun','Noto Sans Thai',system-ui,sans-serif;
+  --font-body:'IBM Plex Sans Thai','Sarabun','Noto Sans Thai',system-ui,sans-serif;
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#0b1522;--surface:#111f31;--surface-2:#16283e;--ink:#e3ebf4;--muted:#9babbd;--line:#253a52;
+    --heading:#a9d1f5;--brand:#1d4f8f;--brand-2:#1e90d6;--on-brand:#ffffff;--accent:#53b2ee;--tint:#15304b;
+    --pos:#4ade80;--neg:#fb923c;--flow:#f2b33d;--warn-bg:#33270f;--warn-ink:#f7cf85;--bar-start:#5b85bb;--bar-end:#9cc6ef;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#0b1522;--surface:#111f31;--surface-2:#16283e;--ink:#e3ebf4;--muted:#9babbd;--line:#253a52;
+  --heading:#a9d1f5;--brand:#1d4f8f;--brand-2:#1e90d6;--on-brand:#ffffff;--accent:#53b2ee;--tint:#15304b;
+  --pos:#4ade80;--neg:#fb923c;--flow:#f2b33d;--warn-bg:#33270f;--warn-ink:#f7cf85;--bar-start:#5b85bb;--bar-end:#9cc6ef;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--font-body);font-size:15px;line-height:1.55;margin:0}
+button,input,select{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.num{font-variant-numeric:tabular-nums}
+
+.top{background:linear-gradient(90deg,var(--brand) 0%,var(--brand) 55%,var(--brand-2) 100%);color:var(--on-brand)}
+.top-in{max-width:1320px;margin:0 auto;padding:18px 20px 16px;display:flex;flex-wrap:wrap;gap:8px 24px;align-items:flex-end;justify-content:space-between}
+.top h1{font-family:var(--font-display);font-weight:600;font-size:1.5rem;margin:0;letter-spacing:.01em;line-height:1.2}
+.top p{margin:2px 0 0;opacity:.88;font-size:.92rem}
+.lock{display:flex;gap:8px;align-items:center;font-size:.82rem;opacity:.92}
+.lock svg{flex:none}
+
+.wrap{max-width:1320px;margin:0 auto;padding-inline:20px;padding-block:20px 48px;display:grid;gap:20px;grid-template-columns:minmax(0,1fr)}
+@media (min-width:980px){.wrap{grid-template-columns:350px minmax(0,1fr);align-items:start}.rail{position:sticky;top:calc(env(safe-area-inset-top,0px) + 12px)}}
+@media (max-width:520px){.wrap{padding-inline:16px}}
+
+.rail{display:flex;flex-direction:column;gap:14px;min-width:0}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+.panel h2{font-family:var(--font-display);font-weight:500;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 10px}
+
+.drop{border:1.5px dashed var(--accent);background:var(--tint);border-radius:var(--r);padding:18px 16px;text-align:center;cursor:pointer;display:block;transition:background .15s}
+.drop:hover,.drop.over{background:var(--surface-2)}
+.drop strong{display:block;font-family:var(--font-display);font-weight:500;color:var(--heading);font-size:1rem}
+.drop span{font-size:.85rem;color:var(--muted)}
+.files{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+.files li{display:flex;gap:8px;align-items:center;font-size:.86rem;min-width:0}
+.files .fname{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.files .err{color:var(--neg)}
+.badge{font-size:.72rem;padding:1px 8px;border-radius:999px;background:var(--surface-2);color:var(--heading);white-space:nowrap;border:1px solid var(--line)}
+.x{border:0;background:none;cursor:pointer;color:var(--muted);padding:2px 6px;border-radius:6px;font-size:1rem;line-height:1}
+.x:hover{background:var(--surface-2);color:var(--ink)}
+
+.accts{display:flex;flex-wrap:wrap;gap:6px}
+.acct{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:6px 10px;cursor:pointer;text-align:left;line-height:1.3}
+.acct small{display:block;color:var(--muted);font-size:.74rem}
+.acct[aria-pressed="true"]{border-color:var(--brand);background:var(--brand);color:var(--on-brand)}
+.acct[aria-pressed="true"] small{color:var(--on-brand);opacity:.8}
+.coverage{font-size:.82rem;color:var(--muted);margin:10px 0 0}
+
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.chip{border:1px solid var(--line);background:var(--surface-2);border-radius:999px;padding:3px 11px;font-size:.82rem;cursor:pointer}
+.chip:hover{border-color:var(--accent)}
+.fields{display:grid;grid-template-columns:1fr 1fr;gap:10px 10px}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label{font-size:.8rem;color:var(--muted)}
+.field input,.field select{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:7px 9px;width:100%;min-width:0}
+.field.wide{grid-column:1/-1}
+.field input.money{text-align:right;font-variant-numeric:tabular-nums}
+.field.req input:placeholder-shown{border-color:var(--flow);background:var(--warn-bg)}
+.hint{font-size:.78rem;color:var(--muted);margin:10px 0 0}
+
+details.rules summary{cursor:pointer;font-family:var(--font-display);font-weight:500;font-size:.8rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);list-style:none;display:flex;justify-content:space-between;align-items:center}
+details.rules summary::-webkit-details-marker{display:none}
+details.rules summary::after{content:"+";font-size:1rem}
+details.rules[open] summary::after{content:"–"}
+.rtable{width:100%;border-collapse:collapse;margin-top:10px;font-size:.85rem}
+.rtable th{text-align:left;font-weight:500;color:var(--muted);font-size:.75rem;padding:4px 4px;border-bottom:1px solid var(--line)}
+.rtable td{padding:5px 4px;border-bottom:1px solid var(--line);vertical-align:middle}
+.rtable select{border:1px solid var(--line);border-radius:6px;padding:2px 4px;background:var(--surface)}
+.rtable tr.unknown td:first-child{color:var(--neg);font-weight:600}
+
+.main{display:flex;flex-direction:column;gap:16px;min-width:0}
+.banner{background:var(--warn-bg);color:var(--warn-ink);border-radius:var(--r);padding:10px 14px;font-size:.88rem}
+.headline{display:flex;flex-wrap:wrap;gap:6px 16px;align-items:baseline;justify-content:space-between}
+.headline h2{font-family:var(--font-display);font-weight:600;font-size:1.25rem;margin:0;color:var(--heading);text-wrap:balance}
+.headline .period{color:var(--muted);font-size:.9rem}
+
+.kpis{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+@media (max-width:640px){.kpis{grid-template-columns:minmax(0,1fr)}}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;min-width:0}
+.kpi .lbl{display:flex;justify-content:space-between;gap:8px;font-size:.84rem;color:var(--muted)}
+.kpi .cell{font-size:.72rem;color:var(--muted);opacity:.8;font-variant-numeric:tabular-nums}
+.kpi .val{font-family:var(--font-display);font-weight:600;font-size:1.75rem;line-height:1.25;margin-top:4px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.kpi .sub{font-size:.8rem;color:var(--muted);margin-top:2px}
+.up{color:var(--pos)}.down{color:var(--neg)}
+.kpi.primary{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
+.kpi.primary .lbl,.kpi.primary .cell,.kpi.primary .sub{color:var(--on-brand);opacity:.85}
+
+.split{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px}
+@media (max-width:860px){.split{grid-template-columns:minmax(0,1fr)}}
+.chartbox svg{width:100%;height:auto;display:block}
+.facts{display:grid;grid-template-columns:auto auto;gap:0;margin:0;font-size:.9rem}
+.facts dt{color:var(--muted);padding:7px 0;border-bottom:1px solid var(--line)}
+.facts dd{margin:0;text-align:right;padding:7px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
+.facts .cellref{font-size:.7rem;color:var(--muted);margin-left:6px}
+.dl{margin-top:14px;display:flex;flex-direction:column;gap:6px}
+.btn{border:0;border-radius:8px;padding:10px 14px;background:var(--brand);color:var(--on-brand);font-family:var(--font-display);font-weight:500;cursor:pointer;display:inline-flex;gap:8px;align-items:center;justify-content:center}
+.btn:hover{filter:brightness(1.08)}
+.btn[disabled]{opacity:.45;cursor:not-allowed;filter:none}
+.btn-ghost{background:transparent;color:var(--heading);border:1px solid var(--line)}
+.dlnote{font-size:.78rem;color:var(--muted)}
+
+.tablebox{padding:0;overflow:hidden}
+.tablehead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:14px 16px 10px;flex-wrap:wrap}
+.tablehead h3{margin:0;font-family:var(--font-display);font-weight:500;font-size:1rem;color:var(--heading)}
+.tablehead span{font-size:.82rem;color:var(--muted)}
+.scroll{overflow-x:auto}
+table.cf{width:100%;border-collapse:collapse;font-size:.88rem;min-width:720px}
+table.cf th{background:var(--surface-2);font-weight:500;font-size:.8rem;color:var(--muted);text-align:right;padding:8px 12px;border-bottom:1px solid var(--line);white-space:nowrap}
+table.cf th:first-child,table.cf td:first-child{text-align:left}
+table.cf td{padding:7px 12px;border-bottom:1px solid var(--line);text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+table.cf tr.day{cursor:pointer}
+table.cf tr.day:hover td{background:var(--tint)}
+table.cf tr.edge td{background:var(--surface-2);font-weight:500}
+table.cf tr.detail td{font-size:.8rem;color:var(--muted);padding-top:3px;padding-bottom:3px;border-bottom:1px dashed var(--line);background:var(--surface)}
+table.cf tr.detail td:first-child{padding-left:30px}
+.caret{display:inline-block;width:1em;color:var(--muted);transition:transform .15s}
+tr.day.open .caret{transform:rotate(90deg)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:2px;margin-right:6px;vertical-align:baseline}
+.zero{color:var(--line)}
+
+.issues{display:flex;flex-direction:column;gap:8px}
+.issue{border:1px solid var(--line);border-radius:8px;background:var(--surface)}
+.issue summary{cursor:pointer;padding:9px 12px;font-size:.88rem;display:flex;gap:10px;align-items:center}
+.issue summary b{font-variant-numeric:tabular-nums}
+.issue.warn summary{background:var(--warn-bg);color:var(--warn-ink);border-radius:8px}
+.issue .list{padding:4px 12px 10px;overflow-x:auto}
+.issue table{border-collapse:collapse;font-size:.8rem;width:100%}
+.issue td{padding:3px 8px 3px 0;border-bottom:1px solid var(--line);white-space:nowrap;font-variant-numeric:tabular-nums}
+.empty{color:var(--muted);font-size:.9rem;padding:24px;text-align:center}
+
+.foot{max-width:1320px;margin:0 auto;padding-inline:20px;padding-block:0 28px;color:var(--muted);font-size:.78rem}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(env(safe-area-inset-bottom,0px) + 18px);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:8px;font-size:.88rem;box-shadow:0 6px 24px rgba(0,0,0,.18);z-index:10}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="top-in">
+    <div>
+      <h1>Performance Review</h1>
+      <p>คำนวณผลตอบแทนพอร์ตกองทุนจากไฟล์รายการซื้อขาย กรุงศรี / ฟิลลิป · แยกตามเลขบัญชี</p>
+    </div>
+    <div class="lock"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>อ่านไฟล์ในเบราว์เซอร์นี้เท่านั้น ไม่มีการอัปโหลดข้อมูลลูกค้า</div>
+  </div>
+</header>
+
+<div class="wrap">
+  <aside class="rail">
+    <section class="panel">
+      <h2>ไฟล์รายการซื้อขาย</h2>
+      <label class="drop" id="drop" for="file">
+        <strong>ลากไฟล์มาวาง หรือคลิกเพื่อเลือก</strong>
+        <span>รองรับ .xlsx กรุงศรี และ .xls ฟิลลิป · เลือกได้หลายไฟล์</span>
+      </label>
+      <input type="file" id="file" multiple accept=".xls,.xlsx,.htm,.html,.csv" hidden>
+      <ul class="files" id="files"></ul>
+    </section>
+
+    <section class="panel" id="acctPanel">
+      <h2>บัญชี</h2>
+      <div class="accts" id="accts"></div>
+      <p class="coverage" id="coverage"></p>
+    </section>
+
+    <section class="panel">
+      <h2>ช่วงวัดผลและมูลค่าพอร์ต</h2>
+      <div class="chips" id="presets"></div>
+      <div class="fields">
+        <div class="field"><label for="startDate">วันเริ่มต้น</label><input type="date" id="startDate"></div>
+        <div class="field req"><label for="startVal">มูลค่าพอร์ต ณ วันเริ่มต้น</label><input id="startVal" class="money" inputmode="decimal" placeholder="0.00" autocomplete="off"></div>
+        <div class="field"><label for="endDate">วันสิ้นสุด</label><input type="date" id="endDate"></div>
+        <div class="field req"><label for="endVal">มูลค่าพอร์ต ณ วันสิ้นสุด</label><input id="endVal" class="money" inputmode="decimal" placeholder="0.00" autocomplete="off"></div>
+        <div class="field wide" id="basisField" hidden><label for="basis">วันที่ของรายการฟิลลิป</label><select id="basis"><option value="order">วันส่งคำสั่ง (เหมือนที่ทำใน template เดิม)</option><option value="invest">วันลงทุน</option></select></div>
+      </div>
+      <p class="hint">มูลค่า ณ วันเริ่มต้น คือพอร์ตที่ลูกค้าลงทุนอยู่แล้วก่อนเริ่มวัดผล (ช่อง H3 ใน template) ส่วนรายการในไฟล์คือเงินเข้า-ออกระหว่างงวด คีย์ทั้งสองช่องจาก statement หรือไฟล์ review · รายการที่ตรงกับวันเริ่มต้นหรือวันสิ้นสุดนับรวมด้วย</p>
+    </section>
+
+    <section class="panel">
+      <details class="rules" id="rulesBox">
+        <summary>การแปลงประเภทรายการ</summary>
+        <div id="rules"></div>
+        <p class="hint">Switch In นับเป็นซื้อ · Switch Out นับเป็นขาย · ระบบจำการตั้งค่านี้ไว้ในเบราว์เซอร์</p>
+      </details>
+    </section>
+  </aside>
+
+  <main class="main" id="main">
+    <div class="banner" id="demoBanner" hidden>กำลังแสดงข้อมูลตัวอย่าง (สมมติ) เพื่อให้เห็นหน้าตาผลลัพธ์ · ลากไฟล์ transaction ของลูกค้ามาวางเพื่อเริ่มคำนวณจริง</div>
+    <div class="headline">
+      <h2 id="title">—</h2>
+      <span class="period num" id="periodText"></span>
+    </div>
+
+    <div class="kpis" id="kpis"></div>
+
+    <div class="split">
+      <section class="panel chartbox">
+        <h2>สะพานมูลค่าพอร์ต</h2>
+        <div id="chart"></div>
+      </section>
+      <section class="panel">
+        <h2>สรุปตาม template</h2>
+        <dl class="facts" id="facts"></dl>
+        <div class="dl">
+          <button class="btn" id="dlBtn" type="button" disabled>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 19h16"/></svg>
+            ดาวน์โหลด Excel
+          </button>
+          <span class="dlnote" id="dlNote">ไฟล์ตาม template Performance Review พร้อมสูตร XIRR และกราฟ</span>
+        </div>
+      </section>
+    </div>
+
+    <section class="panel tablebox">
+      <div class="tablehead"><h3>ตารางสรุปเงินลงทุนรายวัน</h3><span id="tableNote">คลิกแถวเพื่อดูรายการกองทุนของวันนั้น</span></div>
+      <div class="scroll"><table class="cf" id="cf"></table></div>
+    </section>
+
+    <section class="issues" id="issues"></section>
+  </main>
+</div>
+<footer class="foot">AVP Performance Review · เวอร์ชัน 2026.10.09-1445</footer>
+<div class="toast" id="toast" role="status" hidden></div>
+
+<script src="lib/xlsx-0.18.5.full.min.js"></script>
+<script src="lib/jszip-3.10.1.min.js"></script>
+<script>
+"use strict";
+/* ---------- embedded template (cleaned copy of the user's Performance Review template) ---------- */
+const BASE_XLSX_B64 = "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";
+const TEMPLATE = {"static": [{"c": "A", "r": 1, "s": 1, "t": "แบบที่ 1 : สรุปผลตอบแทนตามระยะเวลาที่ถือครอง (Holding Period Return)"}, {"c": "G", "r": 1, "s": 4, "t": "ตารางสรุปเงินลงทุน"}, {"c": "P", "r": 1, "s": 5, "t": "ตารางสำหรับใช้ Copy ไปวางใน Presentation"}, {"c": "S", "r": 1, "s": 5, "t": "กราฟสำหรับใช้ Copy ไปวางใน Presentation"}, {"c": "G", "r": 2, "s": 6, "t": "วันที่"}, {"c": "H", "r": 2, "s": 7, "t": "ซื้อ"}, {"c": "I", "r": 2, "s": 8, "t": "ขาย"}, {"c": "J", "r": 2, "s": 8, "t": "เงินปันผล"}, {"c": "K", "r": 2, "s": 6, "t": "ต้นทุนสะสม"}, {"c": "L", "r": 2, "s": 9, "t": "จำนวนวัน"}, {"c": "M", "r": 2, "s": 6, "t": "ต้นทุนเฉลี่ย"}, {"c": "N", "r": 2, "s": 10, "t": "CF"}, {"c": "P", "r": 2, "s": 11, "t": "มูลค่าพอร์ต ณ ปัจจุบัน"}, {"c": "A", "r": 3, "s": 1, "t": "เงื่อนไข"}, {"c": "F", "r": 3, "s": 13, "t": "วันเริ่มต้น"}, {"c": "P", "r": 3, "s": 17, "t": "ต้นทุนรวม"}, {"c": "A", "r": 4, "s": 2, "t": "1. รู้วันที่เริ่มต้นลงทุน/เริ่มต้นวัดผล"}, {"c": "P", "r": 4, "s": 19, "t": "กำไร / ขาดทุน (บาท)"}, {"c": "A", "r": 5, "s": 2, "t": "2. รู้วันที่สิ้นสุดการลงทุน/สิ้นสุดการวัดผล"}, {"c": "P", "r": 5, "s": 17, "t": "ต้นทุนเฉลี่ย"}, {"c": "A", "r": 6, "s": 2, "t": "3. รู้มูลค่าพอร์ตเริ่มต้น"}, {"c": "P", "r": 6, "s": 19, "t": "กำไร / ขาดทุน  (%)"}, {"c": "A", "r": 7, "s": 2, "t": "4. รู้มูลค่าพอร์ตสิ้นสุด"}, {"c": "P", "r": 7, "s": 22, "t": "IRR (% ต่อปี)"}, {"c": "A", "r": 8, "s": 2, "t": "5. รู้วันที่ลงทุนเพิ่ม และ/หรือ นำเงินออกระหว่างทาง"}, {"c": "P", "r": 8, "s": 24, "t": "จำนวนวันที่ลงทุน"}, {"c": "A", "r": 9, "s": 2, "t": "6. รู้จำนวนเงินที่ลงทุนเพิ่ม และ/หรือ นำออกระหว่างทาง"}, {"c": "P", "r": 10, "s": 26, "t": "มูลค่าพอร์ตต้นงวด"}, {"c": "A", "r": 11, "s": 1, "t": "หลักการ"}, {"c": "P", "r": 11, "s": 26, "t": "ลงทุนเพิ่ม/ลดระหว่างงวด"}, {"c": "A", "r": 12, "s": 2, "t": "กำไร (บาท) = มูลค่าเงินปลายงวด - มูลค่าเงินต้นงวด + เงินที่ลงทุนเพิ่มระหว่างงวด - เงินที่นำออกระหว่างงวด"}, {"c": "P", "r": 12, "s": 26, "t": "กำไร / ขาดทุน"}, {"c": "A", "r": 13, "s": 2, "t": "% กำไร = กำไร (บาท) / ต้นทุนเฉลี่ยถ่วงน้ำหนักตามเวลาที่ได้ลงทุน"}, {"c": "P", "r": 13, "s": 26, "t": "มูลค่าพอร์ตปลายงวด"}, {"c": "A", "r": 15, "s": 1, "t": "ข้อควรระวัง"}, {"c": "A", "r": 16, "s": 2, "t": "1. ผลตอบแทนเป็นบาท จะถูกต้องในทุกกรณี"}, {"c": "A", "r": 17, "s": 2, "t": "2. ผลตอบแทนเป็น % จะเริ่มเพี้ยนมากขึ้น หากคำนวณในช่วงเวลายาวๆ"}, {"c": "A", "r": 18, "s": 2, "t": "3. ไม่ควรใช้คำนวณผลตอบแทนยาวเกิน 1 ปี"}], "dyn": {"F34": {"s": 13, "t": "วันสิ้นสุด"}, "O34": {"s": 28, "t": "<= คีย์เองโดยใช้มูลค่าพอร์ต ณ สิ้นวันทำการสุดท้ายก่อนวัดผล"}}};
+
+/* ---------- helpers ---------- */
+const $ = (id) => document.getElementById(id);
+const DAY = 86400000;
+const clean = (s) => String(s == null ? "" : s).replace(/ /g, " ").replace(/\s+/g, " ").trim();
+const norm = (s) => clean(s).toLowerCase();
+const esc = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+const todayDay = () => { const d = new Date(); return Math.floor(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) / DAY); };
+const dayFromYMD = (y, m, d) => Math.floor(Date.UTC(y, m - 1, d) / DAY);
+const isoOf = (day) => new Date(day * DAY).toISOString().slice(0, 10);
+const dayOfIso = (s) => { const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s || ""); return m ? dayFromYMD(+m[1], +m[2], +m[3]) : null; };
+const fmtDate = (day) => { const d = new Date(day * DAY); return d.getUTCDate() + "/" + String(d.getUTCMonth() + 1).padStart(2, "0") + "/" + d.getUTCFullYear(); };
+const yearOf = (day) => new Date(day * DAY).getUTCFullYear();
+const nf2 = new Intl.NumberFormat("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const money = (v) => (v == null || !isFinite(v)) ? "–" : nf2.format(v);
+const pct = (v) => (v == null || !isFinite(v)) ? "–" : (v * 100).toFixed(2) + "%";
+const compact = (v) => Math.abs(v) >= 1e6 ? (v / 1e6).toFixed(2) + " ล้าน" : nf2.format(v);
+const excelSerial = (day) => day + 25569;
+function parseNum(v) {
+  if (typeof v === "number") return isFinite(v) ? v : null;
+  const s = clean(v).replace(/[,\s฿]/g, "");
+  if (!s || s === "-") return null;
+  const n = parseFloat(s);
+  return isFinite(n) ? n : null;
+}
+function parseDay(v, date1904) {
+  if (v == null || v === "") return null;
+  if (typeof v === "number") { const serial = v + (date1904 ? 1462 : 0); return Math.floor(serial + 1e-9) - 25569; }
+  if (v instanceof Date) return dayFromYMD(v.getFullYear(), v.getMonth() + 1, v.getDate());
+  const s = clean(v);
+  let m = /^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})/.exec(s);
+  if (m) { let y = +m[3]; if (y < 100) y += 2000; if (y > 2400) y -= 543; return dayFromYMD(y, +m[2], +m[1]); }
+  m = /^(\d{4})[\/\-.](\d{1,2})[\/\-.](\d{1,2})/.exec(s);
+  if (m) { let y = +m[1]; if (y > 2400) y -= 543; return dayFromYMD(y, +m[2], +m[3]); }
+  return null;
+}
+
+/* ---------- classification rules ---------- */
+const TYPE_DEFAULTS = {
+  buy: ["buy", "sub", "subscription", "subscribe", "purchase", "switch in", "switch-in", "switchin", "swi", "ซื้อ", "สับเปลี่ยนเข้า"],
+  sell: ["sell", "red", "redeem", "redemption", "switch out", "switch-out", "switchout", "swo", "ขาย", "ขายคืน", "สับเปลี่ยนออก"],
+  div: ["dividend", "div", "cash dividend", "ปันผล", "เงินปันผล"]
+};
+const STATUS_OK = ["order done", "done", "completed", "complete", "success", "allotted"];
+const TYPE_LABEL = { buy: "ซื้อ", sell: "ขาย", div: "ปันผล", skip: "ไม่นับ" };
+const RULES_KEY = "avp-performance-review-rules-v1";
+let userRules = { types: {}, status: {} };
+try { const raw = localStorage.getItem(RULES_KEY); if (raw) userRules = Object.assign({ types: {}, status: {} }, JSON.parse(raw)); } catch (e) { /* storage unavailable */ }
+function saveRules() { try { localStorage.setItem(RULES_KEY, JSON.stringify(userRules)); } catch (e) { /* ignore */ } }
+function defaultType(label) { const k = norm(label); for (const t of ["buy", "sell", "div"]) if (TYPE_DEFAULTS[t].includes(k)) return t; return null; }
+function typeRule(label) { const k = norm(label); return userRules.types[k] || defaultType(label) || "skip"; }
+function statusRule(status) { const k = norm(status); if (!k) return true; if (k in userRules.status) return !!userRules.status[k]; return STATUS_OK.includes(k); }
+
+/* ---------- source formats ---------- */
+const FORMATS = [
+  { id: "krungsri", name: "กรุงศรี", need: ["trade date", "side", "amounts"],
+    cols: { date: ["trade date"], type: ["side"], acct: ["cus"], fund: ["fund code"], amc: ["amc"], units: ["units"], amount: ["amounts"], note: ["remark"] } },
+  { id: "phillip", name: "ฟิลลิป", need: ["คำสั่ง", "วันลงทุน", "จำนวนเงิน"],
+    cols: { date: ["วันลงทุน"], type: ["คำสั่ง"], acct: ["บัญชี"], fund: ["ชื่อกองทุน"], amc: ["บริษัทจัดการ"], units: ["จำนวนหน่วย"], amount: ["จำนวนเงิน"], status: ["สถานะ"], order: ["เลขที่คำสั่ง"], orderDate: ["เวลาส่งคำสั่ง"] } }
+];
+const SRC_NAME = { krungsri: "กรุงศรี", phillip: "ฟิลลิป", demo: "ตัวอย่าง" };
+
+function sniffHtml(u8) {
+  let i = 0; if (u8[0] === 0xef && u8[1] === 0xbb && u8[2] === 0xbf) i = 3;
+  while (i < u8.length && (u8[i] === 32 || u8[i] === 9 || u8[i] === 10 || u8[i] === 13)) i++;
+  return u8[i] === 0x3c; // "<"
+}
+function tablesFromHtml(text) {
+  const doc = new DOMParser().parseFromString(text, "text/html");
+  return [...doc.querySelectorAll("table")].map((t) => [...t.rows].map((tr) => [...tr.cells].map((td) => clean(td.textContent))));
+}
+function tablesFromWorkbook(u8) {
+  const wb = XLSX.read(u8, { type: "array", cellDates: false, raw: false });
+  const date1904 = !!(wb.Workbook && wb.Workbook.WBProps && wb.Workbook.WBProps.date1904);
+  return { date1904, tables: wb.SheetNames.map((n) => XLSX.utils.sheet_to_json(wb.Sheets[n], { header: 1, raw: true, defval: "" })) };
+}
+function findHeader(aoa) {
+  for (let r = 0; r < Math.min(aoa.length, 25); r++) {
+    const row = (aoa[r] || []).map(norm);
+    for (const f of FORMATS) {
+      if (f.need.every((n) => row.includes(n))) {
+        const idx = {};
+        for (const [k, names] of Object.entries(f.cols)) { idx[k] = row.findIndex((c) => names.includes(c)); }
+        return { fmt: f, row: r, idx };
+      }
+    }
+  }
+  return null;
+}
+async function parseFile(file) {
+  const u8 = new Uint8Array(await file.arrayBuffer());
+  let tables, date1904 = false;
+  if (sniffHtml(u8)) tables = tablesFromHtml(new TextDecoder("utf-8").decode(u8));
+  else { if (typeof XLSX === "undefined") throw new Error("โหลดตัวอ่านไฟล์ Excel ไม่สำเร็จ ตรวจการเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่"); ({ tables, date1904 } = tablesFromWorkbook(u8)); }
+  for (const aoa of tables) {
+    const h = findHeader(aoa);
+    if (!h) continue;
+    const get = (row, k) => (h.idx[k] >= 0 ? row[h.idx[k]] : "");
+    const rows = [];
+    for (let r = h.row + 1; r < aoa.length; r++) {
+      const row = aoa[r] || [];
+      const typeRaw = clean(get(row, "type"));
+      const day = parseDay(get(row, "date"), date1904);
+      if (!typeRaw || day == null) continue;
+      rows.push({
+        src: h.fmt.id, acct: clean(get(row, "acct")) || "(ไม่ระบุ)", day, dayInvest: day, dayOrder: parseDay(get(row, "orderDate"), date1904), typeRaw,
+        status: clean(get(row, "status")), fund: clean(get(row, "fund")), amc: clean(get(row, "amc")),
+        units: parseNum(get(row, "units")), amount: parseNum(get(row, "amount")),
+        note: clean(get(row, "note")), order: clean(get(row, "order")), file: file.name
+      });
+    }
+    return { source: h.fmt.id, rows };
+  }
+  throw new Error("ไม่พบหัวตารางของกรุงศรีหรือฟิลลิปในไฟล์นี้");
+}
+
+/* ---------- state ---------- */
+const state = { files: [], txns: [], accounts: new Map(), current: null, demo: false, openDays: new Set() };
+const acctKey = (t) => t.src + "|" + t.acct;
+const dupKey = (t) => [t.src, t.acct, t.dayInvest != null ? t.dayInvest : t.day, norm(t.typeRaw), t.fund, t.units == null ? "" : t.units.toFixed(4), t.amount == null ? "" : t.amount.toFixed(2), t.order].join("|");
+
+const BASIS_KEY = "avp-performance-review-phillip-date";
+let phillipBasis = "order";
+try { const b = localStorage.getItem(BASIS_KEY); if (b === "order" || b === "invest") phillipBasis = b; } catch (e) { /* storage unavailable */ }
+const otherDateNote = (t) => (t.src !== "phillip" || t.dayOrder == null || t.dayOrder === t.dayInvest) ? "" : (phillipBasis === "order" ? "วันลงทุน " + fmtDate(t.dayInvest) : "ส่งคำสั่ง " + fmtDate(t.dayOrder));
+
+function rebuildTxns() {
+  for (const f of state.files) for (const t of f.rows || []) if (t.dayInvest != null) t.day = (t.src === "phillip" && phillipBasis === "order" && t.dayOrder != null) ? t.dayOrder : t.dayInvest;
+  const seen = new Set(); state.txns = [];
+  for (const f of state.files) {
+    f.dupes = 0;
+    if (!f.rows) continue;
+    const mine = new Set();
+    for (const t of f.rows) {
+      const k = dupKey(t);
+      if (seen.has(k)) { f.dupes++; continue; }
+      mine.add(k); state.txns.push(t);
+    }
+    mine.forEach((k) => seen.add(k));
+  }
+  const keys = new Set(state.txns.map(acctKey));
+  for (const k of [...state.accounts.keys()]) if (!keys.has(k)) state.accounts.delete(k);
+  for (const a of state.accounts.values()) { const d = state.txns.filter((t) => acctKey(t) === a.key).map((t) => t.day); a.first = Math.min(...d); a.last = Math.max(...d); }
+  for (const k of keys) if (!state.accounts.has(k)) {
+    const rows = state.txns.filter((t) => acctKey(t) === k);
+    const days = rows.map((t) => t.day);
+    const last = Math.max(...days), y = yearOf(last), today = todayDay();
+    state.accounts.set(k, { key: k, src: rows[0].src, acct: rows[0].acct, first: Math.min(...days), last,
+      start: dayFromYMD(y, 1, 1), end: Math.min(dayFromYMD(y, 12, 31), Math.max(today, last)), sv: null, ev: null });
+  }
+  if (!state.accounts.has(state.current)) state.current = state.accounts.size ? [...state.accounts.keys()][0] : null;
+}
+
+/* ---------- demo data (invented, for the first view only) ---------- */
+function loadDemo() {
+  const T = (y, m, d, type, fund, amount, units) => ({ src: "demo", acct: "ตัวอย่าง-001", day: dayFromYMD(y, m, d), typeRaw: type, status: "", fund, amc: "", units, amount, note: "", order: "", file: "ตัวอย่าง" });
+  const rows = [];
+  for (let m = 1; m <= 6; m++) {
+    rows.push(T(2026, m, 5, "Buy", "กองทุนหุ้นโลก A", 20000, 1500 + m * 7.31));
+    rows.push(T(2026, m, 5, "Buy", "กองทุนตราสารหนี้ B", 15000, 1210 + m * 1.02));
+    rows.push(T(2026, m, 5, "Buy", "กองทุนทองคำ C", 10000, 480 + m * 3.4));
+  }
+  rows.push(T(2026, 3, 10, "Switch Out", "กองทุนตราสารหนี้ B", 150000, 12020.5));
+  rows.push(T(2026, 3, 12, "Switch In", "กองทุนหุ้นเอเชีย D", 150000, 9874.21));
+  rows.push(T(2026, 4, 28, "Dividend", "กองทุนหุ้นเอเชีย D", 3250, null));
+  rows.push(T(2026, 5, 20, "Sell", "กองทุนทองคำ C", 200000, 8102.6));
+  state.files = [{ name: "ตัวอย่าง", source: "demo", rows, demo: true }];
+  state.demo = true;
+  rebuildTxns();
+  const a = state.accounts.get(state.current);
+  a.start = dayFromYMD(2026, 1, 1); a.end = dayFromYMD(2026, 6, 30); a.sv = 2000000; a.ev = 2163480.55;
+}
+
+/* ---------- calculation (mirrors the template formulas) ---------- */
+function xirr(cfs, days) {
+  const d0 = days[0], t = days.map((d) => (d - d0) / 365);
+  const f = (r) => cfs.reduce((s, c, i) => s + c / Math.pow(1 + r, t[i]), 0);
+  const df = (r) => cfs.reduce((s, c, i) => s - t[i] * c / Math.pow(1 + r, t[i] + 1), 0);
+  if (!(cfs.some((c) => c > 0) && cfs.some((c) => c < 0))) return null;
+  let r = 0.1;
+  for (let i = 0; i < 100; i++) {
+    const y = f(r), d = df(r);
+    if (!isFinite(y) || !isFinite(d) || d === 0) break;
+    const nr = r - y / d;
+    if (nr <= -0.9999999) break;
+    if (Math.abs(nr - r) < 1e-12) return nr;
+    r = nr;
+  }
+  let lo = -0.9999, hi = 1, flo = f(lo);
+  while (f(hi) * flo > 0 && hi < 1e6) hi *= 2;
+  if (f(hi) * flo > 0) return null;
+  for (let i = 0; i < 300; i++) { const mid = (lo + hi) / 2, fm = f(mid); if (fm * flo <= 0) hi = mid; else { lo = mid; flo = fm; } }
+  return (lo + hi) / 2;
+}
+
+function analyse(a) {
+  const all = state.txns.filter((t) => acctKey(t) === a.key);
+  const out = { used: [], outside: [], status: [], type: [], amount: [] };
+  for (const t of all) {
+    const rule = typeRule(t.typeRaw);
+    if (!statusRule(t.status)) { out.status.push(t); continue; }
+    if (rule === "skip") { out.type.push(t); continue; }
+    if (t.amount == null) { out.amount.push(t); continue; }
+    if (a.start == null || a.end == null || t.day < a.start || t.day > a.end) { out.outside.push(t); continue; }
+    out.used.push(Object.assign({ kind: rule }, t));
+  }
+  const byDay = new Map();
+  for (const t of out.used) {
+    if (!byDay.has(t.day)) byDay.set(t.day, { day: t.day, buy: 0, sell: 0, div: 0, items: [] });
+    const g = byDay.get(t.day); g[t.kind] += t.amount; g.items.push(t);
+  }
+  out.days = [...byDay.values()].sort((x, y) => x.day - y.day);
+  out.all = all;
+  return out;
+}
+
+function calc(a, days) {
+  const ok = a.start != null && a.end != null && a.end >= a.start && a.sv != null && a.ev != null;
+  const G = [a.start, ...days.map((d) => d.day)];
+  const H = [a.sv || 0, ...days.map((d) => d.buy)];
+  const I = [0, ...days.map((d) => d.sell)];
+  const J = [0, ...days.map((d) => d.div)];
+  const K = []; for (let i = 0; i < G.length; i++) K.push(i === 0 ? H[0] : K[i - 1] + H[i] - I[i] - J[i]);
+  const L = G.map((g, i) => (i + 1 < G.length ? G[i + 1] - g : a.end - g));
+  const N = G.map((g, i) => -H[i] + I[i] + J[i]);
+  const sumL = L.reduce((s, x) => s + x, 0);
+  const avg = sumL ? K.reduce((s, k, i) => s + k * L[i], 0) / sumL : null;
+  const cost = K[K.length - 1];
+  const net = H.slice(1).reduce((s, x) => s + x, 0) - I.slice(1).reduce((s, x) => s + x, 0) - J.slice(1).reduce((s, x) => s + x, 0);
+  const res = { ok, G, H, I, J, K, L, N, avg, cost, net, days: a.end - a.start + 1 };
+  if (ok) {
+    res.profit = a.ev - cost;
+    res.pct = avg ? res.profit / avg : null;
+    res.irr = xirr([...N, a.ev], [...G, a.end]);
+  }
+  return res;
+}
+
+/* ---------- rendering ---------- */
+function render() {
+  renderFiles(); renderAccounts(); renderInputs(); renderRules();
+  const a = state.accounts.get(state.current);
+  $("demoBanner").hidden = !state.demo;
+  if (!a) {
+    $("title").textContent = "ยังไม่มีข้อมูล";
+    $("periodText").textContent = "";
+    $("kpis").innerHTML = ""; $("chart").innerHTML = ""; $("facts").innerHTML = ""; $("issues").innerHTML = "";
+    $("cf").innerHTML = '<tbody><tr><td class="empty">ลากไฟล์ transaction มาวางที่ช่องด้านซ้าย</td></tr></tbody>';
+    $("dlBtn").disabled = true;
+    return;
+  }
+  const an = analyse(a), r = calc(a, an.days);
+  state.view = { a, an, r };
+  $("title").textContent = SRC_NAME[a.src] + " · บัญชี " + a.acct;
+  $("periodText").textContent = (a.start != null && a.end != null) ? fmtDate(a.start) + " – " + fmtDate(a.end) + " · " + r.days.toLocaleString() + " วัน" : "";
+  renderKpis(a, r); renderChart(a, r); renderFacts(a, r); renderTable(a, an, r); renderIssues(a, an);
+  const bad = !r.ok || r.irr == null;
+  $("dlBtn").disabled = !r.ok;
+  $("dlNote").textContent = !r.ok ? "กรอกมูลค่าพอร์ตต้นงวดและปลายงวดก่อนดาวน์โหลด" : (bad ? "XIRR คำนวณไม่ได้ (กระแสเงินไม่มีทั้งบวกและลบ) แต่ดาวน์โหลดได้" : "ไฟล์ตาม template Performance Review พร้อมสูตร XIRR และกราฟ");
+}
+
+function renderFiles() {
+  const ul = $("files");
+  ul.innerHTML = state.files.filter((f) => !f.demo).map((f, i) => {
+    const info = f.error ? '<span class="err">' + esc(f.error) + "</span>" : '<span class="badge">' + SRC_NAME[f.source] + " · " + f.rows.length + " รายการ" + (f.dupes ? " · ซ้ำ " + f.dupes : "") + "</span>";
+    return '<li><span class="fname" title="' + esc(f.name) + '">' + esc(f.name) + "</span>" + info + '<button class="x" type="button" data-rm="' + i + '" aria-label="เอาไฟล์ ' + esc(f.name) + ' ออก">×</button></li>';
+  }).join("");
+}
+function renderAccounts() {
+  const box = $("accts");
+  if (!state.accounts.size) { box.innerHTML = '<span class="hint">ยังไม่มีไฟล์</span>'; $("coverage").textContent = ""; return; }
+  box.innerHTML = [...state.accounts.values()].map((a) => {
+    const n = state.txns.filter((t) => acctKey(t) === a.key).length;
+    return '<button type="button" class="acct" data-acct="' + esc(a.key) + '" aria-pressed="' + (a.key === state.current) + '">' + esc(a.acct) + "<small>" + SRC_NAME[a.src] + " · " + n + " รายการ</small></button>";
+  }).join("");
+  const a = state.accounts.get(state.current);
+  $("coverage").textContent = a ? "ข้อมูลในไฟล์: " + fmtDate(a.first) + " – " + fmtDate(a.last) : "";
+}
+function renderInputs() {
+  const a = state.accounts.get(state.current);
+  const dis = !a;
+  for (const id of ["startDate", "endDate", "startVal", "endVal"]) $(id).disabled = dis;
+  $("basisField").hidden = !a || a.src !== "phillip";
+  $("basis").value = phillipBasis;
+  if (!a) { $("presets").innerHTML = ""; return; }
+  if (document.activeElement !== $("startDate")) $("startDate").value = a.start != null ? isoOf(a.start) : "";
+  if (document.activeElement !== $("endDate")) $("endDate").value = a.end != null ? isoOf(a.end) : "";
+  if (document.activeElement !== $("startVal")) $("startVal").value = a.sv != null ? nf2.format(a.sv) : "";
+  if (document.activeElement !== $("endVal")) $("endVal").value = a.ev != null ? nf2.format(a.ev) : "";
+  const years = [...new Set(state.txns.filter((t) => acctKey(t) === a.key).map((t) => yearOf(t.day)))].sort((x, y) => y - x);
+  $("presets").innerHTML = years.map((y) => '<button type="button" class="chip" data-year="' + y + '">ปี ' + y + "</button>").join("") +
+    '<button type="button" class="chip" data-first="1">ตั้งแต่รายการแรก</button>';
+}
+function renderRules() {
+  const types = new Map(), stats = new Map();
+  for (const t of state.txns) {
+    const k = norm(t.typeRaw); if (!types.has(k)) types.set(k, { label: t.typeRaw, n: 0 }); types.get(k).n++;
+    const s = norm(t.status); if (s) { if (!stats.has(s)) stats.set(s, { label: t.status, n: 0 }); stats.get(s).n++; }
+  }
+  let unknown = 0;
+  let html = '<table class="rtable"><thead><tr><th>ประเภทในไฟล์</th><th>จำนวน</th><th>นับเป็น</th></tr></thead><tbody>';
+  for (const [k, v] of types) {
+    const cur = typeRule(v.label), isUnknown = !defaultType(v.label) && !userRules.types[k];
+    if (isUnknown) unknown++;
+    html += '<tr class="' + (isUnknown ? "unknown" : "") + '"><td>' + esc(v.label) + '</td><td class="num">' + v.n + '</td><td><select data-type="' + esc(k) + '" aria-label="นับ ' + esc(v.label) + ' เป็น">' +
+      ["buy", "sell", "div", "skip"].map((o) => '<option value="' + o + '"' + (o === cur ? " selected" : "") + ">" + TYPE_LABEL[o] + "</option>").join("") + "</select></td></tr>";
+  }
+  html += "</tbody></table>";
+  if (stats.size) {
+    html += '<table class="rtable"><thead><tr><th>สถานะ (ฟิลลิป)</th><th>จำนวน</th><th>นับ</th></tr></thead><tbody>';
+    for (const [k, v] of stats) html += "<tr><td>" + esc(v.label) + '</td><td class="num">' + v.n + '</td><td><input type="checkbox" data-status="' + esc(k) + '"' + (statusRule(v.label) ? " checked" : "") + ' aria-label="นับสถานะ ' + esc(v.label) + '"></td></tr>';
+    html += "</tbody></table>";
+  }
+  $("rules").innerHTML = state.txns.length ? html : '<p class="hint">จะแสดงเมื่อมีไฟล์</p>';
+  if (unknown) $("rulesBox").open = true;
+}
+
+function renderKpis(a, r) {
+  const k = (cls, lbl, cell, val, sub, tone) => '<div class="kpi ' + cls + '"><div class="lbl"><span>' + lbl + '</span><span class="cell">' + cell + '</span></div><div class="val ' + (tone || "") + '">' + val + '</div><div class="sub">' + sub + "</div></div>";
+  if (!r.ok) {
+    $("kpis").innerHTML = k("", "กำไร / ขาดทุน (บาท)", "Q4", "–", "รอมูลค่าพอร์ตต้นงวด/ปลายงวด") + k("", "กำไร / ขาดทุน (%)", "Q6", "–", "ถ่วงน้ำหนักต้นทุนตามเวลา") + k("", "IRR (% ต่อปี)", "Q7", "–", "XIRR");
+    return;
+  }
+  const tone = (v) => (v == null ? "" : v >= 0 ? "up" : "down");
+  $("kpis").innerHTML =
+    k("primary", "กำไร / ขาดทุน (บาท)", "Q4", money(r.profit), "มูลค่าปลายงวด − ต้นทุนรวม") +
+    k("", "กำไร / ขาดทุน (%)", "Q6", pct(r.pct), "เทียบต้นทุนเฉลี่ย " + compact(r.avg), tone(r.pct)) +
+    k("", "IRR (% ต่อปี)", "Q7", r.irr == null ? "#NUM!" : pct(r.irr), "XIRR · " + r.days.toLocaleString() + " วัน", tone(r.irr));
+}
+
+function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p; }
+function renderChart(a, r) {
+  if (!r.ok) { $("chart").innerHTML = '<p class="empty">กราฟจะแสดงเมื่อกรอกมูลค่าพอร์ตครบ</p>'; return; }
+  const sv = a.sv, net = r.net, pr = a.ev - sv - net, ev = a.ev;
+  const bars = [
+    { lbl: "มูลค่าพอร์ตต้นงวด", y0: 0, y1: sv, v: sv, c: "var(--bar-start)" },
+    { lbl: "ลงทุนเพิ่ม/ลดระหว่างงวด", y0: sv, y1: sv + net, v: net, c: "var(--flow)" },
+    { lbl: "กำไร / ขาดทุน", y0: sv + net, y1: ev, v: pr, c: pr >= 0 ? "var(--pos)" : "var(--neg)" },
+    { lbl: "มูลค่าพอร์ตปลายงวด", y0: 0, y1: ev, v: ev, c: "var(--bar-end)" }
+  ];
+  const levels = [sv, sv + net, ev];
+  let lo = Math.min(...levels), hi = Math.max(...levels);
+  const span = Math.max(hi - lo, Math.abs(hi) * 0.02, 1);
+  let min = lo - span * 1.2 <= 0 || lo <= 0 ? Math.min(0, lo) : lo - span * 0.9;
+  const step = niceStep((hi + span * 0.25 - min) / 4);
+  min = min === 0 ? 0 : Math.floor(min / step) * step;
+  const max = Math.ceil((hi + span * 0.18) / step) * step;
+  const W = 560, H = 290, L = 64, R = 8, T = 22, B = 46;
+  const y = (v) => T + (H - T - B) * (1 - (v - min) / (max - min));
+  const bw = (W - L - R) / bars.length;
+  let s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="สะพานมูลค่าพอร์ตจากต้นงวดถึงปลายงวด">';
+  for (let v = min; v <= max + step / 2; v += step) {
+    s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="var(--line)" stroke-width="1"/>';
+    s += '<text x="' + (L - 8) + '" y="' + (y(v) + 4) + '" text-anchor="end" font-size="11" fill="var(--muted)" class="num">' + (Math.abs(max) >= 1e6 ? (v / 1e6).toFixed(step < 1e6 ? 1 : 0) + "M" : Math.round(v).toLocaleString()) + "</text>";
+  }
+  bars.forEach((b, i) => {
+    const x = L + i * bw + bw * 0.18, w = bw * 0.64;
+    const top = y(Math.max(b.y0, b.y1)), bot = y(Math.max(min, Math.min(b.y0, b.y1)));
+    const h = Math.max(2, bot - top);
+    s += '<rect x="' + x + '" y="' + top + '" width="' + w + '" height="' + h + '" fill="' + b.c + '" rx="2"/>';
+    if (i < 3) { const nx = L + (i + 1) * bw + bw * 0.18; s += '<line x1="' + (x + w) + '" x2="' + nx + '" y1="' + y(b.y1) + '" y2="' + y(b.y1) + '" stroke="var(--muted)" stroke-dasharray="3 3" stroke-width="1"/>'; }
+    s += '<text x="' + (x + w / 2) + '" y="' + (top - 6) + '" text-anchor="middle" font-size="12" font-weight="600" fill="var(--ink)" class="num">' + (i === 1 || i === 2 ? (b.v >= 0 ? "+" : "−") + compact(Math.abs(b.v)) : compact(b.v)) + "</text>";
+    const words = b.lbl.split("/");
+    s += '<text x="' + (x + w / 2) + '" y="' + (H - B + 18) + '" text-anchor="middle" font-size="11.5" fill="var(--muted)">' + esc(words[0]) + (words[1] ? "/" : "") + "</text>";
+    if (words[1]) s += '<text x="' + (x + w / 2) + '" y="' + (H - B + 33) + '" text-anchor="middle" font-size="11.5" fill="var(--muted)">' + esc(words[1]) + "</text>";
+  });
+  if (min > 0) s += '<text x="' + L + '" y="' + (H - 2) + '" font-size="10" fill="var(--muted)">แกนไม่เริ่มที่ 0</text>';
+  $("chart").innerHTML = s + "</svg>";
+}
+
+function renderFacts(a, r) {
+  const row = (lbl, cell, v) => "<dt>" + lbl + '<span class="cellref">' + cell + "</span></dt><dd>" + v + "</dd>";
+  $("facts").innerHTML =
+    row("มูลค่าพอร์ตต้นงวด", "Q10", money(a.sv)) +
+    row("ลงทุนเพิ่ม/ลดระหว่างงวด", "Q11", money(r.net)) +
+    row("ต้นทุนรวม", "Q3", money(r.cost)) +
+    row("ต้นทุนเฉลี่ย", "Q5", money(r.avg)) +
+    row("มูลค่าพอร์ตปลายงวด", "Q13", money(a.ev)) +
+    row("จำนวนวันที่ลงทุน", "Q8", r.days.toLocaleString());
+}
+
+function renderTable(a, an, r) {
+  const z = (v) => (v ? money(v) : '<span class="zero">–</span>');
+  let h = '<thead><tr><th>วันที่</th><th><span class="dot" style="background:var(--pos)"></span>ซื้อ</th><th><span class="dot" style="background:var(--neg)"></span>ขาย</th><th>เงินปันผล</th><th>ต้นทุนสะสม</th><th>จำนวนวัน</th><th>CF</th></tr></thead><tbody>';
+  h += '<tr class="edge"><td>' + fmtDate(a.start) + " · ยอดต้นงวด</td><td>" + money(a.sv || 0) + '</td><td></td><td></td><td>' + money(r.K[0]) + "</td><td>" + r.L[0] + "</td><td>" + money(r.N[0]) + "</td></tr>";
+  an.days.forEach((d, i) => {
+    const j = i + 1, open = state.openDays.has(d.day);
+    h += '<tr class="day' + (open ? " open" : "") + '" data-day="' + d.day + '" tabindex="0" aria-expanded="' + open + '"><td><span class="caret">›</span>' + fmtDate(d.day) + '</td><td>' + z(r.H[j]) + "</td><td>" + z(r.I[j]) + "</td><td>" + z(r.J[j]) + "</td><td>" + money(r.K[j]) + "</td><td>" + r.L[j] + "</td><td>" + money(r.N[j]) + "</td></tr>";
+    if (open) for (const t of d.items) {
+      const col = t.kind === "buy" ? 1 : t.kind === "sell" ? 2 : 3;
+      const cells = ["", "", "", ""]; cells[col] = money(t.amount);
+      const od = otherDateNote(t);
+      h += '<tr class="detail"><td>' + esc(t.fund || "-") + " · " + esc(t.typeRaw) + (od ? " · " + od : "") + "</td><td>" + cells[1] + "</td><td>" + cells[2] + "</td><td>" + cells[3] + '</td><td colspan="3">' + (t.units != null ? t.units.toLocaleString("en-US", { maximumFractionDigits: 4 }) + " หน่วย" : "") + "</td></tr>";
+    }
+  });
+  h += '<tr class="edge"><td>' + fmtDate(a.end) + ' · มูลค่าปลายงวด</td><td></td><td></td><td></td><td></td><td></td><td>' + (a.ev != null ? money(a.ev) : "–") + "</td></tr></tbody>";
+  $("cf").innerHTML = h;
+  $("tableNote").textContent = an.days.length + " วันที่มีรายการ · " + an.used.length + " รายการ · คลิกแถวเพื่อดูกองทุน";
+}
+
+function renderIssues(a, an) {
+  const block = (warn, title, rows, extra) => {
+    if (!rows.length) return "";
+    const body = rows.slice(0, 300).map((t) => "<tr><td>" + fmtDate(t.day) + "</td><td>" + esc(t.typeRaw) + "</td><td>" + esc(t.fund) + "</td><td>" + (t.amount != null ? money(t.amount) : "ไม่มีจำนวนเงิน") + "</td><td>" + esc(t.status || t.note || "") + "</td></tr>").join("");
+    return '<details class="issue' + (warn ? " warn" : "") + '"><summary><b>' + rows.length + "</b> " + title + (extra || "") + '</summary><div class="list"><table>' + body + "</table></div></details>";
+  };
+  const statuses = [...new Set(an.status.map((t) => t.status))].join(", ");
+  const types = [...new Set(an.type.map((t) => t.typeRaw))].join(", ");
+  $("issues").innerHTML =
+    block(true, "รายการที่ประเภทยังไม่ได้กำหนด", an.type, " · " + esc(types) + " (ตั้งค่าได้ที่การแปลงประเภทรายการ)") +
+    block(true, "รายการที่ไม่มีจำนวนเงิน", an.amount) +
+    block(false, "รายการที่ไม่นับเพราะสถานะ", an.status, " · " + esc(statuses)) +
+    block(false, "รายการนอกช่วงวัดผล", an.outside);
+}
+
+/* ---------- Excel export ---------- */
+const xmlText = (s) => String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+const colNum = (c) => c.split("").reduce((n, ch) => n * 26 + ch.charCodeAt(0) - 64, 0);
+function cellXml(c) {
+  const ref = c.c + c.r, s = c.s != null ? ' s="' + c.s + '"' : "";
+  if (c.f != null) {
+    const f = "<f>" + xmlText(c.f) + "</f>";
+    if (c.v === "#NUM!") return '<c r="' + ref + '"' + s + ' t="e">' + f + "<v>#NUM!</v></c>";
+    if (typeof c.v === "number" && isFinite(c.v)) return '<c r="' + ref + '"' + s + ">" + f + "<v>" + c.v + "</v></c>";
+    return '<c r="' + ref + '"' + s + ">" + f + "</c>";
+  }
+  if (c.t != null) return '<c r="' + ref + '"' + s + ' t="inlineStr"><is><t xml:space="preserve">' + xmlText(c.t) + "</t></is></c>";
+  if (c.n != null) return '<c r="' + ref + '"' + s + "><v>" + c.n + "</v></c>";
+  return '<c r="' + ref + '"' + s + "/>";
+}
+function sheetDataXml(cells) {
+  const rows = new Map();
+  for (const c of cells) { if (!rows.has(c.r)) rows.set(c.r, []); rows.get(c.r).push(c); }
+  const nums = [...rows.keys()].sort((x, y) => x - y);
+  return "<sheetData>" + nums.map((r) => '<row r="' + r + '">' + rows.get(r).sort((x, y) => colNum(x.c) - colNum(y.c)).map(cellXml).join("") + "</row>").join("") + "</sheetData>";
+}
+
+function buildSheet1(a, an, r, meta) {
+  const n = an.days.length, ld = 3 + n, er = ld + 1;
+  const cells = TEMPLATE.static.map((c) => ({ c: c.c, r: c.r, s: c.s, t: c.t }));
+  const add = (c, row, o) => cells.push(Object.assign({ c, r: row }, o));
+  for (let i = 0; i <= n; i++) {
+    const row = 3 + i;
+    add("G", row, { s: 14, n: excelSerial(r.G[i]) });
+    add("H", row, r.H[i] || i === 0 ? { s: 15, n: r.H[i] } : { s: 15 });
+    add("I", row, i === 0 ? { s: 16 } : r.I[i] ? { s: 15, n: r.I[i] } : { s: 15 });
+    add("J", row, i === 0 ? { s: 16 } : r.J[i] ? { s: 15, n: r.J[i] } : { s: 15 });
+    add("K", row, { s: 15, f: i === 0 ? "H3" : "K" + (row - 1) + "+H" + row + "-I" + row + "-J" + row, v: r.K[i] });
+    add("L", row, { s: 15, f: 'IF(G' + (row + 1) + '<>"",G' + (row + 1) + "-G" + row + ",$G$" + er + "-G" + row + "+1)", v: r.L[i] });
+    add("M", row, { s: 15, f: "IF(ISNUMBER(K" + row + "),$Q$5)", v: r.avg });
+    add("N", row, { s: 15, f: "IF(ISNUMBER(K" + row + "),-H" + row + "+I" + row + "+J" + row + ")", v: r.N[i] });
+  }
+  add("F", er, { s: TEMPLATE.dyn.F34.s, t: TEMPLATE.dyn.F34.t });
+  add("G", er, { s: 29, n: excelSerial(a.end) });
+  for (const c of ["H", "I", "J", "K", "L", "M"]) add(c, er, { s: 16 });
+  add("N", er, { s: 30, n: a.ev });
+  add("O", er, { s: TEMPLATE.dyn.O34.s, t: TEMPLATE.dyn.O34.t });
+  for (const c of ["G", "H", "I", "J", "K", "L", "M"]) add(c, er + 1, { s: 31 });
+  const q = (row, s, f, v) => add("Q", row, { s, f, v });
+  q(2, 12, "N" + er, a.ev);
+  q(3, 18, "OFFSET($K$2,COUNT($K$3:$K$" + ld + "),0,1,1)", r.cost);
+  q(4, 20, "Q2-Q3", r.profit);
+  q(5, 18, "SUMPRODUCT(K3:K" + ld + ",L3:L" + ld + ")/SUM(L3:L" + ld + ")", r.avg);
+  q(6, 21, "Q4/Q5", r.pct);
+  q(7, 23, "XIRR(N3:N" + er + ",G3:G" + er + ")", r.irr == null ? "#NUM!" : r.irr);
+  q(8, 25, "(G" + er + "-G3+1)", r.days);
+  q(10, 27, "H3", a.sv);
+  q(11, 27, n ? "SUM(H4:H" + ld + ")-SUM(I4:I" + ld + ")-SUM(J4:J" + ld + ")" : "0", r.net);
+  q(12, 27, "Q13-Q10-Q11", a.ev - a.sv - r.net);
+  q(13, 27, "N" + er, a.ev);
+  const free = (row) => !cells.some((c) => c.c === "A" && c.r === row);
+  let mr = 20; while (!free(mr) || !free(mr + 3)) mr++;
+  add("A", mr, { s: 1, t: "ที่มาข้อมูล" });
+  add("A", mr + 1, { s: 2, t: "บัญชี: " + SRC_NAME[a.src] + " " + a.acct });
+  add("A", mr + 2, { s: 2, t: "ไฟล์: " + meta.files });
+  add("A", mr + 3, { s: 2, t: "สร้างเมื่อ: " + fmtDate(todayDay()) + " ด้วย Performance Review (" + an.used.length + " รายการ ดูชีต รายการซื้อขาย)" });
+  return { xml: sheetDataXml(cells), ld, er, last: Math.max(er + 1, mr + 3) };
+}
+
+function buildSheet2(an) {
+  const cells = [];
+  const hdr = ["วันที่", "แหล่งข้อมูล", "ประเภทในไฟล์", "นับเป็น", "กองทุน", "บลจ.", "จำนวนหน่วย", "จำนวนเงิน", "หมายเหตุ"];
+  const cols = "ABCDEFGHI".split("");
+  hdr.forEach((t, i) => cells.push({ c: cols[i], r: 1, s: 6, t }));
+  const items = an.used.slice().sort((x, y) => x.day - y.day);
+  items.forEach((t, i) => {
+    const r = i + 2;
+    cells.push({ c: "A", r, s: 14, n: excelSerial(t.day) });
+    cells.push({ c: "B", r, s: 35, t: SRC_NAME[t.src] });
+    cells.push({ c: "C", r, s: 35, t: t.typeRaw });
+    cells.push({ c: "D", r, s: 35, t: TYPE_LABEL[t.kind] });
+    cells.push({ c: "E", r, s: 33, t: t.fund });
+    cells.push({ c: "F", r, s: 33, t: t.amc });
+    cells.push(t.units != null ? { c: "G", r, s: 34, n: t.units } : { c: "G", r, s: 34 });
+    cells.push({ c: "H", r, s: 15, n: t.amount });
+    cells.push({ c: "I", r, s: 33, t: [t.status, t.note, otherDateNote(t)].filter(Boolean).join(" · ") });
+  });
+  const last = items.length + 1, tr = last + 2;
+  const sums = { buy: 0, sell: 0, div: 0 }; items.forEach((t) => (sums[t.kind] += t.amount));
+  [["buy", "รวมซื้อ"], ["sell", "รวมขาย"], ["div", "รวมเงินปันผล"]].forEach(([k, lbl], i) => {
+    cells.push({ c: "G", r: tr + i, s: 13, t: lbl });
+    cells.push({ c: "H", r: tr + i, s: 15, f: 'SUMIF($D$2:$D$' + Math.max(last, 2) + ',"' + TYPE_LABEL[k] + '",$H$2:$H$' + Math.max(last, 2) + ")", v: sums[k] });
+  });
+  return { xml: sheetDataXml(cells), last: tr + 2 };
+}
+
+function patchChart(xml, r, ld) {
+  xml = xml.replace(/\$G\$3:\$G\$33/g, "$G$3:$G$" + ld).replace(/\$K\$3:\$K\$33/g, "$K$3:$K$" + ld).replace(/\$M\$3:\$M\$33/g, "$M$3:$M$" + ld);
+  const series = [r.G.map(excelSerial), r.K, r.G.map(excelSerial), r.G.map(() => r.avg || 0)];
+  let i = 0;
+  xml = xml.replace(/(<c:numCache><c:formatCode>[^<]*<\/c:formatCode>)<c:ptCount val="\d+"\/>(?:<c:pt idx="\d+"><c:v>[^<]*<\/c:v><\/c:pt>)*(<\/c:numCache>)/g, (m, head, tail) => {
+    const vals = series[i++] || [];
+    return head + '<c:ptCount val="' + vals.length + '"/>' + vals.map((v, j) => '<c:pt idx="' + j + '"><c:v>' + v + "</c:v></c:pt>").join("") + tail;
+  });
+  const vals = r.K.concat([r.avg]).filter((v) => v != null && isFinite(v));
+  let lo = Math.min(...vals), hi = Math.max(...vals);
+  const pad = Math.max((hi - lo) * 0.15, Math.abs(hi) * 0.02, 1);
+  const step = niceStep((hi - lo + 2 * pad) / 5);
+  const ymin = Math.max(0, Math.floor((lo - pad) / step) * step), ymax = Math.ceil((hi + pad) / step) * step;
+  xml = xml.replace('<c:max val="30000000"/>', '<c:max val="' + ymax + '"/>').replace('<c:min val="20000000"/>', '<c:min val="' + ymin + '"/>').replace('<c:majorUnit val="2000000"/>', '<c:majorUnit val="' + step + '"/>');
+  const span = r.days;
+  xml = xml.replace('<c:majorUnit val="30"/>', '<c:majorUnit val="' + (span <= 200 ? 30 : span <= 400 ? 61 : 91) + '"/>');
+  return xml;
+}
+
+async function buildXlsx(a, an, r) {
+  if (typeof JSZip === "undefined") throw new Error("โหลดตัวสร้างไฟล์ Excel ไม่สำเร็จ ตรวจการเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่");
+  const zip = await JSZip.loadAsync(BASE_XLSX_B64, { base64: true });
+  const files = [...new Set(an.all.map((t) => t.file))].join(", ");
+  const s1 = buildSheet1(a, an, r, { files });
+  let x1 = await zip.file("xl/worksheets/sheet1.xml").async("string");
+  x1 = x1.replace("<sheetData/>", s1.xml).replace(/<dimension ref="[^"]+"\/>/, '<dimension ref="A1:S' + s1.last + '"/>');
+  zip.file("xl/worksheets/sheet1.xml", x1, { createFolders: false });
+  const s2 = buildSheet2(an);
+  let x2 = await zip.file("xl/worksheets/sheet2.xml").async("string");
+  x2 = x2.replace("<sheetData/>", s2.xml).replace(/<dimension ref="[^"]+"\/>/, '<dimension ref="A1:I' + s2.last + '"/>');
+  zip.file("xl/worksheets/sheet2.xml", x2, { createFolders: false });
+  const ch = await zip.file("xl/charts/chart1.xml").async("string");
+  zip.file("xl/charts/chart1.xml", patchChart(ch, r, s1.ld), { createFolders: false });
+  const now = new Date().toISOString().replace(/\.\d+Z$/, "Z");
+  const core = await zip.file("docProps/core.xml").async("string");
+  zip.file("docProps/core.xml", core.replace(/(<dcterms:created[^>]*>)[^<]*/, "$1" + now).replace(/(<dcterms:modified[^>]*>)[^<]*/, "$1" + now), { createFolders: false });
+  return zip.generateAsync({ type: "blob", compression: "DEFLATE", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+}
+
+const downloadsReady = (window.claude && typeof window.claude.use === "function") ? window.claude.use("downloads").catch(() => null) : Promise.resolve(null);
+async function download() {
+  const v = state.view; if (!v || !v.r.ok) return;
+  const btn = $("dlBtn"); btn.disabled = true;
+  try {
+    const blob = await buildXlsx(v.a, v.an, v.r);
+    const srcEn = { krungsri: "Krungsri", phillip: "Phillip", demo: "Demo" }[v.a.src];
+    const filename = "Performance_" + srcEn + "_" + v.a.acct.replace(/[^\w\-]+/g, "") + "_" + isoOf(v.a.start) + "_to_" + isoOf(v.a.end) + ".xlsx";
+    const dl = await downloadsReady;
+    if (dl) {
+      try { await dl.save({ filename, data: blob }); toast("บันทึก " + filename + " แล้ว"); }
+      catch (e) {
+        const code = e && e.code;
+        if (code === "declined") toast("ยกเลิกการบันทึกไฟล์");
+        else if (code === "rate_limited") toast("มีหน้าต่างบันทึกไฟล์เปิดอยู่ ลองอีกครั้งในอีกสักครู่");
+        else toast("บันทึกไฟล์ไม่สำเร็จ (" + (code || "unknown") + ")");
+      }
+    } else {
+      const url = URL.createObjectURL(blob), link = document.createElement("a");
+      link.href = url; link.download = filename; document.body.appendChild(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+      toast("ดาวน์โหลด " + filename);
+    }
+  } catch (e) { toast(e.message || String(e)); }
+  finally { btn.disabled = !(state.view && state.view.r.ok); }
+}
+
+let toastTimer;
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.hidden = false; clearTimeout(toastTimer); toastTimer = setTimeout(() => (t.hidden = true), 3800); }
+
+/* ---------- events ---------- */
+async function addFiles(list) {
+  if (state.demo) { state.files = []; state.demo = false; state.accounts.clear(); state.current = null; }
+  const before = new Set(state.accounts.keys());
+  for (const file of list) {
+    try { const p = await parseFile(file); state.files.push({ name: file.name, source: p.source, rows: p.rows }); }
+    catch (e) { state.files.push({ name: file.name, source: null, rows: null, error: e.message || "อ่านไฟล์ไม่ได้" }); }
+  }
+  rebuildTxns();
+  const added = [...state.accounts.keys()].filter((k) => !before.has(k));
+  if (added.length) state.current = added[0];
+  state.openDays.clear();
+  render();
+}
+$("file").addEventListener("change", (e) => { if (e.target.files.length) addFiles([...e.target.files]); e.target.value = ""; });
+const drop = $("drop");
+let dragDepth = 0;
+document.addEventListener("dragenter", (e) => { e.preventDefault(); dragDepth++; drop.classList.add("over"); });
+document.addEventListener("dragover", (e) => { e.preventDefault(); });
+document.addEventListener("dragleave", () => { dragDepth = Math.max(0, dragDepth - 1); if (!dragDepth) drop.classList.remove("over"); });
+document.addEventListener("drop", (e) => {
+  e.preventDefault(); dragDepth = 0; drop.classList.remove("over");
+  const fl = e.dataTransfer && e.dataTransfer.files; if (fl && fl.length) addFiles([...fl]);
+});
+
+$("files").addEventListener("click", (e) => {
+  const b = e.target.closest("[data-rm]"); if (!b) return;
+  const real = state.files.filter((f) => !f.demo); const f = real[+b.dataset.rm];
+  state.files = state.files.filter((x) => x !== f); rebuildTxns(); render();
+});
+$("accts").addEventListener("click", (e) => { const b = e.target.closest("[data-acct]"); if (!b) return; state.current = b.dataset.acct; state.openDays.clear(); render(); });
+$("presets").addEventListener("click", (e) => {
+  const a = state.accounts.get(state.current); if (!a) return;
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.dataset.year) { const y = +b.dataset.year; a.start = dayFromYMD(y, 1, 1); a.end = Math.min(dayFromYMD(y, 12, 31), Math.max(todayDay(), a.last)); }
+  else if (b.dataset.first) { a.start = a.first; a.end = Math.max(todayDay(), a.last); }
+  render();
+});
+for (const id of ["startDate", "endDate"]) $(id).addEventListener("change", (e) => {
+  const a = state.accounts.get(state.current); if (!a) return;
+  const d = dayOfIso(e.target.value); if (id === "startDate") a.start = d; else a.end = d; render();
+});
+for (const id of ["startVal", "endVal"]) {
+  $(id).addEventListener("input", (e) => { const a = state.accounts.get(state.current); if (!a) return; const v = parseNum(e.target.value); if (id === "startVal") a.sv = v; else a.ev = v; render(); });
+  $(id).addEventListener("blur", (e) => { const v = parseNum(e.target.value); e.target.value = v == null ? "" : nf2.format(v); });
+}
+$("rules").addEventListener("change", (e) => {
+  const s = e.target.closest("select[data-type]"), c = e.target.closest("input[data-status]");
+  if (s) userRules.types[s.dataset.type] = s.value;
+  if (c) userRules.status[c.dataset.status] = c.checked;
+  saveRules(); render();
+});
+$("cf").addEventListener("click", (e) => { const tr = e.target.closest("tr.day"); if (!tr) return; const d = +tr.dataset.day; state.openDays.has(d) ? state.openDays.delete(d) : state.openDays.add(d); render(); });
+$("cf").addEventListener("keydown", (e) => { if (e.key !== "Enter" && e.key !== " ") return; const tr = e.target.closest("tr.day"); if (!tr) return; e.preventDefault(); const d = +tr.dataset.day; state.openDays.has(d) ? state.openDays.delete(d) : state.openDays.add(d); render(); const again = document.querySelector('tr.day[data-day="' + d + '"]'); if (again) again.focus(); });
+$("dlBtn").addEventListener("click", download);
+$("basis").addEventListener("change", (e) => { phillipBasis = e.target.value; try { localStorage.setItem(BASIS_KEY, phillipBasis); } catch (err) { /* ignore */ } rebuildTxns(); state.openDays.clear(); render(); });
+
+if ("launchQueue" in window) {
+  window.launchQueue.setConsumer(async (params) => {
+    if (!params.files || !params.files.length) return;
+    const files = await Promise.all(params.files.map((h) => h.getFile()));
+    addFiles(files);
+  });
+}
+
+loadDemo();
+render();
+</script>
+<script>if ("serviceWorker" in navigator && location.protocol.startsWith("http")) window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>
+</body>
+</html>
