@@ -126,21 +126,29 @@ details.rules[open] summary::after{content:"–"}
 @media (max-width:640px){.kpis{grid-template-columns:minmax(0,1fr)}}
 .kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;min-width:0}
 .kpi .lbl{display:flex;justify-content:space-between;gap:8px;font-size:.84rem;color:var(--muted)}
-.kpi .cell{font-size:.72rem;color:var(--muted);opacity:.8;font-variant-numeric:tabular-nums}
 .kpi .val{font-family:var(--font-display);font-weight:600;font-size:1.75rem;line-height:1.25;margin-top:4px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
 .kpi .sub{font-size:.8rem;color:var(--muted);margin-top:2px}
 .up{color:var(--pos)}.down{color:var(--neg)}
 .kpi.primary{background:var(--brand);border-color:var(--brand);color:var(--on-brand)}
-.kpi.primary .lbl,.kpi.primary .cell,.kpi.primary .sub{color:var(--on-brand);opacity:.85}
+.kpi.primary .lbl,.kpi.primary .sub{color:var(--on-brand);opacity:.85}
 
 .split{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:16px}
 @media (max-width:860px){.split{grid-template-columns:minmax(0,1fr)}}
 .chartbox svg{width:100%;height:auto;display:block}
-.facts{display:grid;grid-template-columns:auto auto;gap:0;margin:0;font-size:.9rem}
-.facts dt{color:var(--muted);padding:7px 0;border-bottom:1px solid var(--line)}
-.facts dd{margin:0;text-align:right;padding:7px 0;border-bottom:1px solid var(--line);font-variant-numeric:tabular-nums}
-.facts .cellref{font-size:.7rem;color:var(--muted);margin-left:6px}
-.dl{margin-top:14px;display:flex;flex-direction:column;gap:6px}
+.cardhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
+.cardhead h2{margin:0}
+.btn-copy{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--heading);border-radius:8px;padding:5px 10px;font-size:.82rem;cursor:pointer;white-space:nowrap}
+.btn-copy:hover{border-color:var(--accent);background:var(--tint)}
+.btn-copy[disabled]{opacity:.45;cursor:not-allowed;background:var(--surface);border-color:var(--line)}
+.sumtable{display:grid;grid-template-columns:minmax(0,1fr) auto;border:1px solid var(--line);border-radius:8px;overflow:hidden;font-size:.92rem}
+.sumtable>div{padding:8px 12px;border-bottom:1px solid var(--line)}
+.sumtable>div:nth-last-child(-n+2){border-bottom:0}
+.sumtable .v{text-align:right;font-variant-numeric:tabular-nums}
+.sumtable .tint{background:var(--tint);font-weight:600}
+.sumtable .hl{background:var(--brand);color:var(--on-brand);font-weight:600}
+.sumtable .b{font-weight:600}
+.dlbar{display:flex;flex-wrap:wrap;gap:12px 20px;align-items:center;justify-content:space-between}
+.dlbar h3{margin:0 0 2px;font-family:var(--font-display);font-weight:500;font-size:1rem;color:var(--heading)}
 .btn{border:0;border-radius:8px;padding:10px 14px;background:var(--brand);color:var(--on-brand);font-family:var(--font-display);font-weight:500;cursor:pointer;display:inline-flex;gap:8px;align-items:center;justify-content:center}
 .btn:hover{filter:brightness(1.08)}
 .btn[disabled]{opacity:.45;cursor:not-allowed;filter:none}
@@ -243,19 +251,13 @@ tr.day.open .caret{transform:rotate(90deg)}
 
     <div class="split">
       <section class="panel chartbox">
-        <h2>สะพานมูลค่าพอร์ต</h2>
+        <div class="cardhead"><h2>สะพานมูลค่าพอร์ต</h2><button class="btn-copy" type="button" data-copy="chart" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>คัดลอกภาพ</button></div>
         <div id="chart"></div>
       </section>
       <section class="panel">
-        <h2>สรุปตาม template</h2>
-        <dl class="facts" id="facts"></dl>
-        <div class="dl">
-          <button class="btn" id="dlBtn" type="button" disabled>
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 19h16"/></svg>
-            ดาวน์โหลด Excel
-          </button>
-          <span class="dlnote" id="dlNote">ไฟล์ตาม template Performance Review พร้อมสูตร XIRR และกราฟ</span>
-        </div>
+        <div class="cardhead"><h2>ตารางสรุปผลตอบแทน</h2><button class="btn-copy" type="button" data-copy="table" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>คัดลอกภาพ</button></div>
+        <div class="sumtable" id="facts"></div>
+        <p class="hint">ภาพที่คัดลอกเป็นพื้นขาว กด ⌘V วางในสไลด์ได้เลย</p>
       </section>
     </div>
 
@@ -265,9 +267,17 @@ tr.day.open .caret{transform:rotate(90deg)}
     </section>
 
     <section class="issues" id="issues"></section>
+
+    <section class="panel dlbar">
+      <div><h3>ไฟล์ Excel ตาม template</h3><span class="dlnote" id="dlNote">ไฟล์ตาม template Performance Review พร้อมสูตร XIRR และกราฟ</span></div>
+      <button class="btn" id="dlBtn" type="button" disabled>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0-5-5m5 5 5-5M4 19h16"/></svg>
+        ดาวน์โหลด Excel
+      </button>
+    </section>
   </main>
 </div>
-<footer class="foot">AVP Performance Review · เวอร์ชัน 2026.10.09-1445</footer>
+<footer class="foot">AVP Performance Review · เวอร์ชัน 2026.10.09-1533</footer>
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script src="lib/xlsx-0.18.5.full.min.js"></script>
@@ -526,6 +536,7 @@ function render() {
     $("kpis").innerHTML = ""; $("chart").innerHTML = ""; $("facts").innerHTML = ""; $("issues").innerHTML = "";
     $("cf").innerHTML = '<tbody><tr><td class="empty">ลากไฟล์ transaction มาวางที่ช่องด้านซ้าย</td></tr></tbody>';
     $("dlBtn").disabled = true;
+    document.querySelectorAll("[data-copy]").forEach((b) => (b.disabled = true));
     return;
   }
   const an = analyse(a), r = calc(a, an.days);
@@ -535,6 +546,7 @@ function render() {
   renderKpis(a, r); renderChart(a, r); renderFacts(a, r); renderTable(a, an, r); renderIssues(a, an);
   const bad = !r.ok || r.irr == null;
   $("dlBtn").disabled = !r.ok;
+  document.querySelectorAll("[data-copy]").forEach((b) => (b.disabled = !r.ok));
   $("dlNote").textContent = !r.ok ? "กรอกมูลค่าพอร์ตต้นงวดและปลายงวดก่อนดาวน์โหลด" : (bad ? "XIRR คำนวณไม่ได้ (กระแสเงินไม่มีทั้งบวกและลบ) แต่ดาวน์โหลดได้" : "ไฟล์ตาม template Performance Review พร้อมสูตร XIRR และกราฟ");
 }
 
@@ -595,35 +607,40 @@ function renderRules() {
 }
 
 function renderKpis(a, r) {
-  const k = (cls, lbl, cell, val, sub, tone) => '<div class="kpi ' + cls + '"><div class="lbl"><span>' + lbl + '</span><span class="cell">' + cell + '</span></div><div class="val ' + (tone || "") + '">' + val + '</div><div class="sub">' + sub + "</div></div>";
+  const k = (cls, lbl, val, sub, tone) => '<div class="kpi ' + cls + '"><div class="lbl"><span>' + lbl + '</span></div><div class="val ' + (tone || "") + '">' + val + '</div><div class="sub">' + sub + "</div></div>";
   if (!r.ok) {
-    $("kpis").innerHTML = k("", "กำไร / ขาดทุน (บาท)", "Q4", "–", "รอมูลค่าพอร์ตต้นงวด/ปลายงวด") + k("", "กำไร / ขาดทุน (%)", "Q6", "–", "ถ่วงน้ำหนักต้นทุนตามเวลา") + k("", "IRR (% ต่อปี)", "Q7", "–", "XIRR");
+    $("kpis").innerHTML = k("", "กำไร / ขาดทุน (บาท)", "–", "รอมูลค่าพอร์ต ณ วันเริ่มต้นและวันสิ้นสุด") + k("", "กำไร / ขาดทุน (%)", "–", "ถ่วงน้ำหนักต้นทุนตามเวลา") + k("", "IRR (% ต่อปี)", "–", "XIRR");
     return;
   }
   const tone = (v) => (v == null ? "" : v >= 0 ? "up" : "down");
   $("kpis").innerHTML =
-    k("primary", "กำไร / ขาดทุน (บาท)", "Q4", money(r.profit), "มูลค่าปลายงวด − ต้นทุนรวม") +
-    k("", "กำไร / ขาดทุน (%)", "Q6", pct(r.pct), "เทียบต้นทุนเฉลี่ย " + compact(r.avg), tone(r.pct)) +
-    k("", "IRR (% ต่อปี)", "Q7", r.irr == null ? "#NUM!" : pct(r.irr), "XIRR · " + r.days.toLocaleString() + " วัน", tone(r.irr));
+    k("primary", "กำไร / ขาดทุน (บาท)", money(r.profit), "มูลค่าปลายงวด − ต้นทุนรวม") +
+    k("", "กำไร / ขาดทุน (%)", pct(r.pct), "เทียบต้นทุนเฉลี่ย " + compact(r.avg), tone(r.pct)) +
+    k("", "IRR (% ต่อปี)", r.irr == null ? "#NUM!" : pct(r.irr), "XIRR · " + r.days.toLocaleString() + " วัน", tone(r.irr));
 }
 
-function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p; }
-function renderChart(a, r) {
-  if (!r.ok) { $("chart").innerHTML = '<p class="empty">กราฟจะแสดงเมื่อกรอกมูลค่าพอร์ตครบ</p>'; return; }
-  const sv = a.sv, net = r.net, pr = a.ev - sv - net, ev = a.ev;
+function bridgeData(a, r) {
+  const sv = a.sv, net = r.net, ev = a.ev, pr = ev - sv - net;
   const bars = [
-    { lbl: "มูลค่าพอร์ตต้นงวด", y0: 0, y1: sv, v: sv, c: "var(--bar-start)" },
-    { lbl: "ลงทุนเพิ่ม/ลดระหว่างงวด", y0: sv, y1: sv + net, v: net, c: "var(--flow)" },
-    { lbl: "กำไร / ขาดทุน", y0: sv + net, y1: ev, v: pr, c: pr >= 0 ? "var(--pos)" : "var(--neg)" },
-    { lbl: "มูลค่าพอร์ตปลายงวด", y0: 0, y1: ev, v: ev, c: "var(--bar-end)" }
+    { lbl: "มูลค่าพอร์ตต้นงวด", y0: 0, y1: sv, v: sv, k: "start" },
+    { lbl: "ลงทุนเพิ่ม/ลดระหว่างงวด", y0: sv, y1: sv + net, v: net, k: "flow", delta: true },
+    { lbl: "กำไร / ขาดทุน", y0: sv + net, y1: ev, v: pr, k: pr >= 0 ? "pos" : "neg", delta: true },
+    { lbl: "มูลค่าพอร์ตปลายงวด", y0: 0, y1: ev, v: ev, k: "end" }
   ];
   const levels = [sv, sv + net, ev];
-  let lo = Math.min(...levels), hi = Math.max(...levels);
+  const lo = Math.min(...levels), hi = Math.max(...levels);
   const span = Math.max(hi - lo, Math.abs(hi) * 0.02, 1);
   let min = lo - span * 1.2 <= 0 || lo <= 0 ? Math.min(0, lo) : lo - span * 0.9;
   const step = niceStep((hi + span * 0.25 - min) / 4);
   min = min === 0 ? 0 : Math.floor(min / step) * step;
   const max = Math.ceil((hi + span * 0.18) / step) * step;
+  return { bars, min, max, step };
+}
+function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p; }
+function renderChart(a, r) {
+  if (!r.ok) { $("chart").innerHTML = '<p class="empty">กราฟจะแสดงเมื่อกรอกมูลค่าพอร์ตครบ</p>'; return; }
+  const { bars, min, max, step } = bridgeData(a, r);
+  const CSSC = { start: "var(--bar-start)", flow: "var(--flow)", pos: "var(--pos)", neg: "var(--neg)", end: "var(--bar-end)" };
   const W = 560, H = 290, L = 64, R = 8, T = 22, B = 46;
   const y = (v) => T + (H - T - B) * (1 - (v - min) / (max - min));
   const bw = (W - L - R) / bars.length;
@@ -636,7 +653,7 @@ function renderChart(a, r) {
     const x = L + i * bw + bw * 0.18, w = bw * 0.64;
     const top = y(Math.max(b.y0, b.y1)), bot = y(Math.max(min, Math.min(b.y0, b.y1)));
     const h = Math.max(2, bot - top);
-    s += '<rect x="' + x + '" y="' + top + '" width="' + w + '" height="' + h + '" fill="' + b.c + '" rx="2"/>';
+    s += '<rect x="' + x + '" y="' + top + '" width="' + w + '" height="' + h + '" fill="' + CSSC[b.k] + '" rx="2"/>';
     if (i < 3) { const nx = L + (i + 1) * bw + bw * 0.18; s += '<line x1="' + (x + w) + '" x2="' + nx + '" y1="' + y(b.y1) + '" y2="' + y(b.y1) + '" stroke="var(--muted)" stroke-dasharray="3 3" stroke-width="1"/>'; }
     s += '<text x="' + (x + w / 2) + '" y="' + (top - 6) + '" text-anchor="middle" font-size="12" font-weight="600" fill="var(--ink)" class="num">' + (i === 1 || i === 2 ? (b.v >= 0 ? "+" : "−") + compact(Math.abs(b.v)) : compact(b.v)) + "</text>";
     const words = b.lbl.split("/");
@@ -647,15 +664,102 @@ function renderChart(a, r) {
   $("chart").innerHTML = s + "</svg>";
 }
 
+function summaryRows(a, r) {
+  const ok = r.ok;
+  return [
+    ["มูลค่าพอร์ต ณ ปัจจุบัน", money(a.ev), "tint"],
+    ["ต้นทุนรวม", money(r.cost), ""],
+    ["กำไร / ขาดทุน (บาท)", ok ? money(r.profit) : "–", "hl"],
+    ["ต้นทุนเฉลี่ย", money(r.avg), ""],
+    ["กำไร / ขาดทุน (%)", ok ? pct(r.pct) : "–", "hl"],
+    ["IRR (% ต่อปี)", !ok ? "–" : r.irr == null ? "#NUM!" : pct(r.irr), "b"],
+    ["จำนวนวันที่ลงทุน", r.days.toLocaleString(), "tint"]
+  ];
+}
 function renderFacts(a, r) {
-  const row = (lbl, cell, v) => "<dt>" + lbl + '<span class="cellref">' + cell + "</span></dt><dd>" + v + "</dd>";
-  $("facts").innerHTML =
-    row("มูลค่าพอร์ตต้นงวด", "Q10", money(a.sv)) +
-    row("ลงทุนเพิ่ม/ลดระหว่างงวด", "Q11", money(r.net)) +
-    row("ต้นทุนรวม", "Q3", money(r.cost)) +
-    row("ต้นทุนเฉลี่ย", "Q5", money(r.avg)) +
-    row("มูลค่าพอร์ตปลายงวด", "Q13", money(a.ev)) +
-    row("จำนวนวันที่ลงทุน", "Q8", r.days.toLocaleString());
+  $("facts").innerHTML = summaryRows(a, r).map(([l, v, c]) => '<div class="' + c + '">' + esc(l) + '</div><div class="v ' + c + '">' + v + "</div>").join("");
+}
+
+/* ---------- copy as picture (white background, sized for slides) ---------- */
+const IMG = { ink: "#1f2937", muted: "#4b5563", grid: "#e5e7eb", line: "#bfc9d6", tint: "#dae3f3", hl: "#1e5f9f",
+  start: "#8faadc", flow: "#ffc000", pos: "#006600", neg: "#c00000", end: "#2f5597" };
+const IMG_FONT = "'IBM Plex Sans Thai','Prompt','Sarabun','Thonburi',sans-serif";
+const intFmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+async function loadImgFonts() {
+  try { await Promise.all(["400 20px 'IBM Plex Sans Thai'", "600 20px 'IBM Plex Sans Thai'"].map((f) => document.fonts.load(f))); } catch (e) { /* fall back to system Thai font */ }
+}
+function newCanvas(W, H, scale) {
+  const c = document.createElement("canvas"); c.width = Math.round(W * scale); c.height = Math.round(H * scale);
+  const g = c.getContext("2d"); g.scale(scale, scale); g.fillStyle = "#ffffff"; g.fillRect(0, 0, W, H);
+  return { c, g };
+}
+const toBlob = (c) => new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("สร้างภาพไม่สำเร็จ"))), "image/png"));
+function wrapLabel(g, text, maxW) {
+  if (g.measureText(text).width <= maxW) return [text];
+  const i = text.indexOf("/"); if (i > 0) return [text.slice(0, i + 1).trim(), text.slice(i + 1).trim()];
+  const j = text.lastIndexOf(" "); return j > 0 ? [text.slice(0, j), text.slice(j + 1)] : [text];
+}
+async function chartPng(a, r) {
+  await loadImgFonts();
+  const { bars, min, max, step } = bridgeData(a, r);
+  const W = 1000, H = 560, L = 150, R = 24, T = 52, B = 92;
+  const { c, g } = newCanvas(W, H, 2);
+  const y = (v) => T + (H - T - B) * (1 - (v - min) / (max - min));
+  g.textAlign = "right"; g.textBaseline = "middle"; g.font = "400 15px " + IMG_FONT;
+  for (let v = min; v <= max + step / 2; v += step) {
+    const yy = Math.round(y(v)) + 0.5;
+    g.strokeStyle = IMG.grid; g.lineWidth = 1; g.beginPath(); g.moveTo(L, yy); g.lineTo(W - R, yy); g.stroke();
+    g.fillStyle = IMG.muted; g.fillText(intFmt.format(v), L - 12, yy);
+  }
+  const bw = (W - L - R) / bars.length;
+  bars.forEach((b, i) => {
+    const x = L + i * bw + bw * 0.17, w = bw * 0.66;
+    const top = y(Math.max(b.y0, b.y1)), bot = y(Math.max(min, Math.min(b.y0, b.y1)));
+    g.fillStyle = IMG[b.k]; g.fillRect(x, top, w, Math.max(2, bot - top));
+    if (i < bars.length - 1) {
+      const nx = L + (i + 1) * bw + bw * 0.17, yy = Math.round(y(b.y1)) + 0.5;
+      g.save(); g.setLineDash([5, 4]); g.strokeStyle = IMG.muted; g.lineWidth = 1; g.beginPath(); g.moveTo(x + w, yy); g.lineTo(nx, yy); g.stroke(); g.restore();
+    }
+    g.font = "600 19px " + IMG_FONT; g.fillStyle = IMG.ink; g.textAlign = "center"; g.textBaseline = "bottom";
+    g.fillText(b.delta ? (b.v >= 0 ? "+" : "−") + intFmt.format(Math.abs(b.v)) : intFmt.format(b.v), x + w / 2, top - 8);
+    g.font = "400 16px " + IMG_FONT; g.fillStyle = IMG.muted; g.textBaseline = "top";
+    wrapLabel(g, b.lbl, bw - 12).forEach((line, k) => g.fillText(line, x + w / 2, y(min) + 14 + k * 22));
+  });
+  g.strokeStyle = IMG.muted; g.lineWidth = 1.2; g.beginPath(); g.moveTo(L, Math.round(y(min)) + 0.5); g.lineTo(W - R, Math.round(y(min)) + 0.5); g.stroke();
+  return toBlob(c);
+}
+async function tablePng(a, r) {
+  await loadImgFonts();
+  const rows = summaryRows(a, r);
+  const W = 760, C1 = 420, RH = 50, H = rows.length * RH;
+  const { c, g } = newCanvas(W, H, 2);
+  rows.forEach(([lbl, val, cls], i) => {
+    const y0 = i * RH;
+    g.fillStyle = cls === "hl" ? IMG.hl : cls === "tint" ? IMG.tint : "#ffffff"; g.fillRect(0, y0, W, RH);
+    g.fillStyle = cls === "hl" ? "#ffffff" : IMG.ink;
+    g.font = (cls ? "600" : "400") + " 20px " + IMG_FONT; g.textBaseline = "middle";
+    g.textAlign = "left"; g.fillText(lbl, 18, y0 + RH / 2);
+    g.textAlign = "right"; g.fillText(val, W - 18, y0 + RH / 2);
+    if (i) { g.strokeStyle = IMG.line; g.lineWidth = 1; g.beginPath(); g.moveTo(0, y0 + 0.5); g.lineTo(W, y0 + 0.5); g.stroke(); }
+  });
+  g.strokeStyle = IMG.line; g.lineWidth = 1; g.beginPath(); g.moveTo(C1 + 0.5, 0); g.lineTo(C1 + 0.5, H); g.stroke();
+  g.strokeRect(0.5, 0.5, W - 1, H - 1);
+  return toBlob(c);
+}
+function savePng(blob, kind) {
+  const v = state.view, url = URL.createObjectURL(blob), link = document.createElement("a");
+  link.href = url; link.download = "Performance_" + (kind === "chart" ? "chart" : "summary") + "_" + (v ? v.a.acct.replace(/[^\w\-]+/g, "") : "") + ".png";
+  document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
+}
+function copyImage(kind) {
+  const v = state.view; if (!v || !v.r.ok) { toast("กรอกมูลค่าพอร์ต ณ วันเริ่มต้นและวันสิ้นสุดก่อน"); return; }
+  const make = () => (kind === "chart" ? chartPng(v.a, v.r) : tablePng(v.a, v.r));
+  const fallback = () => make().then((b) => { savePng(b, kind); toast("คัดลอกลงคลิปบอร์ดไม่ได้ในเบราว์เซอร์นี้ เลยบันทึกเป็นไฟล์ PNG แทน"); }).catch((e) => toast(e.message || String(e)));
+  if (!(navigator.clipboard && navigator.clipboard.write && window.ClipboardItem)) { fallback(); return; }
+  try {
+    const item = new ClipboardItem({ "image/png": make() });
+    navigator.clipboard.write([item]).then(() => toast("คัดลอกภาพแล้ว กด ⌘V วางในสไลด์ได้เลย")).catch(fallback);
+  } catch (e) { fallback(); }
 }
 
 function renderTable(a, an, r) {
@@ -907,6 +1011,7 @@ $("rules").addEventListener("change", (e) => {
 $("cf").addEventListener("click", (e) => { const tr = e.target.closest("tr.day"); if (!tr) return; const d = +tr.dataset.day; state.openDays.has(d) ? state.openDays.delete(d) : state.openDays.add(d); render(); });
 $("cf").addEventListener("keydown", (e) => { if (e.key !== "Enter" && e.key !== " ") return; const tr = e.target.closest("tr.day"); if (!tr) return; e.preventDefault(); const d = +tr.dataset.day; state.openDays.has(d) ? state.openDays.delete(d) : state.openDays.add(d); render(); const again = document.querySelector('tr.day[data-day="' + d + '"]'); if (again) again.focus(); });
 $("dlBtn").addEventListener("click", download);
+document.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", () => copyImage(b.dataset.copy)));
 $("basis").addEventListener("change", (e) => { phillipBasis = e.target.value; try { localStorage.setItem(BASIS_KEY, phillipBasis); } catch (err) { /* ignore */ } rebuildTxns(); state.openDays.clear(); render(); });
 
 if ("launchQueue" in window) {
