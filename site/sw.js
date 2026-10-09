@@ -1,7 +1,7 @@
-// AVP Performance Review service worker. Version 2026.10.09-1533
+// AVP Performance Review service worker. Version 2026.10.09-1539
 // Pages: network first, so a new Netlify deploy shows up on the next open; cached copy when offline.
 // Versioned libraries and fonts: cache first.
-const CACHE = "avp-pr-2026.10.09-1533";
+const CACHE = "avp-pr-2026.10.09-1539";
 const SHELL = ["./", "./index.html", "./manifest.webmanifest", "./lib/xlsx-0.18.5.full.min.js", "./lib/jszip-3.10.1.min.js",
   "./icons/icon-192.png", "./icons/icon-512.png", "./icons/favicon-32.png"];
 self.addEventListener("install", (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL))); self.skipWaiting(); });

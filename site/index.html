@@ -137,6 +137,7 @@ details.rules[open] summary::after{content:"–"}
 .chartbox svg{width:100%;height:auto;display:block}
 .cardhead{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px}
 .cardhead h2{margin:0}
+.hl-right{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px}
 .btn-copy{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface);color:var(--heading);border-radius:8px;padding:5px 10px;font-size:.82rem;cursor:pointer;white-space:nowrap}
 .btn-copy:hover{border-color:var(--accent);background:var(--tint)}
 .btn-copy[disabled]{opacity:.45;cursor:not-allowed;background:var(--surface);border-color:var(--line)}
@@ -244,20 +245,19 @@ tr.day.open .caret{transform:rotate(90deg)}
     <div class="banner" id="demoBanner" hidden>กำลังแสดงข้อมูลตัวอย่าง (สมมติ) เพื่อให้เห็นหน้าตาผลลัพธ์ · ลากไฟล์ transaction ของลูกค้ามาวางเพื่อเริ่มคำนวณจริง</div>
     <div class="headline">
       <h2 id="title">—</h2>
-      <span class="period num" id="periodText"></span>
+      <div class="hl-right"><span class="period num" id="periodText"></span><button class="btn-copy" id="copyBtn" type="button" disabled title="คัดลอกชื่อบัญชี ตัวเลขสรุป กราฟ และตาราง เป็นภาพเดียว แล้วกด ⌘V ในสไลด์"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>คัดลอกภาพสรุป</button></div>
     </div>
 
     <div class="kpis" id="kpis"></div>
 
     <div class="split">
       <section class="panel chartbox">
-        <div class="cardhead"><h2>สะพานมูลค่าพอร์ต</h2><button class="btn-copy" type="button" data-copy="chart" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>คัดลอกภาพ</button></div>
+        <div class="cardhead"><h2>สะพานมูลค่าพอร์ต</h2></div>
         <div id="chart"></div>
       </section>
       <section class="panel">
-        <div class="cardhead"><h2>ตารางสรุปผลตอบแทน</h2><button class="btn-copy" type="button" data-copy="table" disabled><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></svg>คัดลอกภาพ</button></div>
+        <div class="cardhead"><h2>ตารางสรุปผลตอบแทน</h2></div>
         <div class="sumtable" id="facts"></div>
-        <p class="hint">ภาพที่คัดลอกเป็นพื้นขาว กด ⌘V วางในสไลด์ได้เลย</p>
       </section>
     </div>
 
@@ -277,7 +277,7 @@ tr.day.open .caret{transform:rotate(90deg)}
     </section>
   </main>
 </div>
-<footer class="foot">AVP Performance Review · เวอร์ชัน 2026.10.09-1533</footer>
+<footer class="foot">AVP Performance Review · เวอร์ชัน 2026.10.09-1539</footer>
 <div class="toast" id="toast" role="status" hidden></div>
 
 <script src="lib/xlsx-0.18.5.full.min.js"></script>
@@ -536,7 +536,7 @@ function render() {
     $("kpis").innerHTML = ""; $("chart").innerHTML = ""; $("facts").innerHTML = ""; $("issues").innerHTML = "";
     $("cf").innerHTML = '<tbody><tr><td class="empty">ลากไฟล์ transaction มาวางที่ช่องด้านซ้าย</td></tr></tbody>';
     $("dlBtn").disabled = true;
-    document.querySelectorAll("[data-copy]").forEach((b) => (b.disabled = true));
+    $("copyBtn").disabled = true;
     return;
   }
   const an = analyse(a), r = calc(a, an.days);
@@ -546,7 +546,7 @@ function render() {
   renderKpis(a, r); renderChart(a, r); renderFacts(a, r); renderTable(a, an, r); renderIssues(a, an);
   const bad = !r.ok || r.irr == null;
   $("dlBtn").disabled = !r.ok;
-  document.querySelectorAll("[data-copy]").forEach((b) => (b.disabled = !r.ok));
+  $("copyBtn").disabled = !r.ok;
   $("dlNote").textContent = !r.ok ? "กรอกมูลค่าพอร์ตต้นงวดและปลายงวดก่อนดาวน์โหลด" : (bad ? "XIRR คำนวณไม่ได้ (กระแสเงินไม่มีทั้งบวกและลบ) แต่ดาวน์โหลดได้" : "ไฟล์ตาม template Performance Review พร้อมสูตร XIRR และกราฟ");
 }
 
@@ -636,6 +636,12 @@ function bridgeData(a, r) {
   const max = Math.ceil((hi + span * 0.18) / step) * step;
   return { bars, min, max, step };
 }
+const intFmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+function axisLabel(v, max, step) {
+  if (Math.abs(max) < 1e6) return intFmt.format(v);
+  const d = step >= 1e6 ? 0 : step % 1e5 === 0 ? 1 : 2;
+  return (v / 1e6).toFixed(d) + "M";
+}
 function niceStep(raw) { const p = Math.pow(10, Math.floor(Math.log10(raw))), m = raw / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 2.5 ? 2.5 : m <= 5 ? 5 : 10) * p; }
 function renderChart(a, r) {
   if (!r.ok) { $("chart").innerHTML = '<p class="empty">กราฟจะแสดงเมื่อกรอกมูลค่าพอร์ตครบ</p>'; return; }
@@ -647,7 +653,7 @@ function renderChart(a, r) {
   let s = '<svg viewBox="0 0 ' + W + " " + H + '" role="img" aria-label="สะพานมูลค่าพอร์ตจากต้นงวดถึงปลายงวด">';
   for (let v = min; v <= max + step / 2; v += step) {
     s += '<line x1="' + L + '" x2="' + (W - R) + '" y1="' + y(v) + '" y2="' + y(v) + '" stroke="var(--line)" stroke-width="1"/>';
-    s += '<text x="' + (L - 8) + '" y="' + (y(v) + 4) + '" text-anchor="end" font-size="11" fill="var(--muted)" class="num">' + (Math.abs(max) >= 1e6 ? (v / 1e6).toFixed(step < 1e6 ? 1 : 0) + "M" : Math.round(v).toLocaleString()) + "</text>";
+    s += '<text x="' + (L - 8) + '" y="' + (y(v) + 4) + '" text-anchor="end" font-size="11" fill="var(--muted)" class="num">' + axisLabel(v, max, step) + "</text>";
   }
   bars.forEach((b, i) => {
     const x = L + i * bw + bw * 0.18, w = bw * 0.64;
@@ -680,81 +686,111 @@ function renderFacts(a, r) {
   $("facts").innerHTML = summaryRows(a, r).map(([l, v, c]) => '<div class="' + c + '">' + esc(l) + '</div><div class="v ' + c + '">' + v + "</div>").join("");
 }
 
-/* ---------- copy as picture (white background, sized for slides) ---------- */
-const IMG = { ink: "#1f2937", muted: "#4b5563", grid: "#e5e7eb", line: "#bfc9d6", tint: "#dae3f3", hl: "#1e5f9f",
-  start: "#8faadc", flow: "#ffc000", pos: "#006600", neg: "#c00000", end: "#2f5597" };
-const IMG_FONT = "'IBM Plex Sans Thai','Prompt','Sarabun','Thonburi',sans-serif";
-const intFmt = new Intl.NumberFormat("en-US", { maximumFractionDigits: 0 });
+/* ---------- copy the whole summary set as one picture (sized for slides) ---------- */
+const SET = { bg: "#f4f7fb", card: "#ffffff", line: "#d8e2ed", grid: "#e3eaf2", ink: "#13243b", muted: "#5d6b7c", heading: "#154681",
+  brand: "#154681", tint: "#e8f4fc", pos: "#15803d", neg: "#b4410f", start: "#7fa6d6", flow: "#d08a00", end: "#154681" };
+const F_DISPLAY = "'Prompt','IBM Plex Sans Thai','Sarabun','Thonburi',sans-serif";
+const F_BODY = "'IBM Plex Sans Thai','Sarabun','Thonburi',sans-serif";
 async function loadImgFonts() {
-  try { await Promise.all(["400 20px 'IBM Plex Sans Thai'", "600 20px 'IBM Plex Sans Thai'"].map((f) => document.fonts.load(f))); } catch (e) { /* fall back to system Thai font */ }
-}
-function newCanvas(W, H, scale) {
-  const c = document.createElement("canvas"); c.width = Math.round(W * scale); c.height = Math.round(H * scale);
-  const g = c.getContext("2d"); g.scale(scale, scale); g.fillStyle = "#ffffff"; g.fillRect(0, 0, W, H);
-  return { c, g };
+  try { await Promise.all(["600 24px Prompt", "500 24px Prompt", "400 16px 'IBM Plex Sans Thai'", "600 16px 'IBM Plex Sans Thai'"].map((f) => document.fonts.load(f))); } catch (e) { /* fall back to system Thai font */ }
 }
 const toBlob = (c) => new Promise((res, rej) => c.toBlob((b) => (b ? res(b) : rej(new Error("สร้างภาพไม่สำเร็จ"))), "image/png"));
+function rr(g, x, y, w, h, r) { g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+function cardBox(g, x, y, w, h, fill, stroke) { rr(g, x, y, w, h, 12); g.fillStyle = fill; g.fill(); if (stroke) { g.strokeStyle = stroke; g.lineWidth = 1; g.stroke(); } }
+function fitFont(g, text, maxW, size, weight, family) { let s = size; for (; s > 10; s--) { g.font = weight + " " + s + "px " + family; if (g.measureText(text).width <= maxW) break; } return s; }
 function wrapLabel(g, text, maxW) {
   if (g.measureText(text).width <= maxW) return [text];
   const i = text.indexOf("/"); if (i > 0) return [text.slice(0, i + 1).trim(), text.slice(i + 1).trim()];
   const j = text.lastIndexOf(" "); return j > 0 ? [text.slice(0, j), text.slice(j + 1)] : [text];
 }
-async function chartPng(a, r) {
-  await loadImgFonts();
+function drawBridge(g, X, Y, W, H, a, r) {
   const { bars, min, max, step } = bridgeData(a, r);
-  const W = 1000, H = 560, L = 150, R = 24, T = 52, B = 92;
-  const { c, g } = newCanvas(W, H, 2);
-  const y = (v) => T + (H - T - B) * (1 - (v - min) / (max - min));
-  g.textAlign = "right"; g.textBaseline = "middle"; g.font = "400 15px " + IMG_FONT;
+  const L = 58, R = 6, T = 26, B = 60;
+  const y = (v) => Y + T + (H - T - B) * (1 - (v - min) / (max - min));
+  g.textAlign = "right"; g.textBaseline = "middle"; g.font = "400 12px " + F_BODY;
   for (let v = min; v <= max + step / 2; v += step) {
     const yy = Math.round(y(v)) + 0.5;
-    g.strokeStyle = IMG.grid; g.lineWidth = 1; g.beginPath(); g.moveTo(L, yy); g.lineTo(W - R, yy); g.stroke();
-    g.fillStyle = IMG.muted; g.fillText(intFmt.format(v), L - 12, yy);
+    g.strokeStyle = SET.grid; g.lineWidth = 1; g.beginPath(); g.moveTo(X + L, yy); g.lineTo(X + W - R, yy); g.stroke();
+    g.fillStyle = SET.muted; g.fillText(axisLabel(v, max, step), X + L - 8, yy);
   }
   const bw = (W - L - R) / bars.length;
   bars.forEach((b, i) => {
-    const x = L + i * bw + bw * 0.17, w = bw * 0.66;
+    const x = X + L + i * bw + bw * 0.18, w = bw * 0.64;
     const top = y(Math.max(b.y0, b.y1)), bot = y(Math.max(min, Math.min(b.y0, b.y1)));
-    g.fillStyle = IMG[b.k]; g.fillRect(x, top, w, Math.max(2, bot - top));
+    g.fillStyle = SET[b.k]; rr(g, x, top, w, Math.max(2, bot - top), 2); g.fill();
     if (i < bars.length - 1) {
-      const nx = L + (i + 1) * bw + bw * 0.17, yy = Math.round(y(b.y1)) + 0.5;
-      g.save(); g.setLineDash([5, 4]); g.strokeStyle = IMG.muted; g.lineWidth = 1; g.beginPath(); g.moveTo(x + w, yy); g.lineTo(nx, yy); g.stroke(); g.restore();
+      const nx = X + L + (i + 1) * bw + bw * 0.18, yy = Math.round(y(b.y1)) + 0.5;
+      g.save(); g.setLineDash([3, 3]); g.strokeStyle = SET.muted; g.lineWidth = 1; g.beginPath(); g.moveTo(x + w, yy); g.lineTo(nx, yy); g.stroke(); g.restore();
     }
-    g.font = "600 19px " + IMG_FONT; g.fillStyle = IMG.ink; g.textAlign = "center"; g.textBaseline = "bottom";
-    g.fillText(b.delta ? (b.v >= 0 ? "+" : "−") + intFmt.format(Math.abs(b.v)) : intFmt.format(b.v), x + w / 2, top - 8);
-    g.font = "400 16px " + IMG_FONT; g.fillStyle = IMG.muted; g.textBaseline = "top";
-    wrapLabel(g, b.lbl, bw - 12).forEach((line, k) => g.fillText(line, x + w / 2, y(min) + 14 + k * 22));
+    g.font = "600 13px " + F_BODY; g.fillStyle = SET.ink; g.textAlign = "center"; g.textBaseline = "bottom";
+    g.fillText(b.delta ? (b.v >= 0 ? "+" : "−") + compact(Math.abs(b.v)) : compact(b.v), x + w / 2, top - 6);
+    g.font = "400 12px " + F_BODY; g.fillStyle = SET.muted; g.textBaseline = "top";
+    wrapLabel(g, b.lbl, bw - 6).forEach((line, k) => g.fillText(line, x + w / 2, y(min) + 8 + k * 16));
   });
-  g.strokeStyle = IMG.muted; g.lineWidth = 1.2; g.beginPath(); g.moveTo(L, Math.round(y(min)) + 0.5); g.lineTo(W - R, Math.round(y(min)) + 0.5); g.stroke();
-  return toBlob(c);
+  if (min > 0) { g.textAlign = "left"; g.textBaseline = "alphabetic"; g.font = "400 11px " + F_BODY; g.fillStyle = SET.muted; g.fillText("แกนไม่เริ่มที่ 0", X + L, Y + H - 4); }
 }
-async function tablePng(a, r) {
-  await loadImgFonts();
-  const rows = summaryRows(a, r);
-  const W = 760, C1 = 420, RH = 50, H = rows.length * RH;
-  const { c, g } = newCanvas(W, H, 2);
+function drawSummary(g, X, Y, W, rowH, rows) {
+  const H = rowH * rows.length;
+  g.save(); rr(g, X, Y, W, H, 8); g.clip();
   rows.forEach(([lbl, val, cls], i) => {
-    const y0 = i * RH;
-    g.fillStyle = cls === "hl" ? IMG.hl : cls === "tint" ? IMG.tint : "#ffffff"; g.fillRect(0, y0, W, RH);
-    g.fillStyle = cls === "hl" ? "#ffffff" : IMG.ink;
-    g.font = (cls ? "600" : "400") + " 20px " + IMG_FONT; g.textBaseline = "middle";
-    g.textAlign = "left"; g.fillText(lbl, 18, y0 + RH / 2);
-    g.textAlign = "right"; g.fillText(val, W - 18, y0 + RH / 2);
-    if (i) { g.strokeStyle = IMG.line; g.lineWidth = 1; g.beginPath(); g.moveTo(0, y0 + 0.5); g.lineTo(W, y0 + 0.5); g.stroke(); }
+    const y0 = Y + i * rowH;
+    g.fillStyle = cls === "hl" ? SET.brand : cls === "tint" ? SET.tint : SET.card; g.fillRect(X, y0, W, rowH);
+    if (i) { g.strokeStyle = SET.line; g.lineWidth = 1; g.beginPath(); g.moveTo(X, Math.round(y0) + 0.5); g.lineTo(X + W, Math.round(y0) + 0.5); g.stroke(); }
+    g.fillStyle = cls === "hl" ? "#ffffff" : SET.ink; g.font = (cls ? "600" : "400") + " 16px " + F_BODY; g.textBaseline = "middle";
+    g.textAlign = "left"; g.fillText(lbl, X + 14, y0 + rowH / 2);
+    g.textAlign = "right"; g.fillText(val, X + W - 14, y0 + rowH / 2);
   });
-  g.strokeStyle = IMG.line; g.lineWidth = 1; g.beginPath(); g.moveTo(C1 + 0.5, 0); g.lineTo(C1 + 0.5, H); g.stroke();
-  g.strokeRect(0.5, 0.5, W - 1, H - 1);
+  g.restore();
+  rr(g, X + 0.5, Y + 0.5, W - 1, H - 1, 8); g.strokeStyle = SET.line; g.lineWidth = 1; g.stroke();
+}
+async function setPng(a, r) {
+  await loadImgFonts();
+  const W = 1200, pad = 24, S = 2;
+  const y0 = 72, kh = 128, gap = 16, y1 = y0 + kh + 20, ch = 400, H = y1 + ch + pad;
+  const c = document.createElement("canvas"); c.width = W * S; c.height = H * S;
+  const g = c.getContext("2d"); g.scale(S, S);
+  g.fillStyle = SET.bg; g.fillRect(0, 0, W, H);
+  // header: account and period
+  g.textBaseline = "alphabetic"; g.textAlign = "left"; g.fillStyle = SET.heading; g.font = "600 24px " + F_DISPLAY;
+  g.fillText(SRC_NAME[a.src] + " · บัญชี " + a.acct, pad, 46);
+  g.textAlign = "right"; g.fillStyle = SET.muted; g.font = "400 16px " + F_BODY;
+  g.fillText(fmtDate(a.start) + " – " + fmtDate(a.end) + " · " + r.days.toLocaleString() + " วัน", W - pad, 46);
+  // KPI tiles
+  const tone = (v) => (v == null ? SET.ink : v >= 0 ? SET.pos : SET.neg);
+  const tiles = [
+    { lbl: "กำไร / ขาดทุน (บาท)", val: money(r.profit), sub: "มูลค่าปลายงวด − ต้นทุนรวม", primary: true },
+    { lbl: "กำไร / ขาดทุน (%)", val: pct(r.pct), sub: "เทียบต้นทุนเฉลี่ย " + compact(r.avg), color: tone(r.pct) },
+    { lbl: "IRR (% ต่อปี)", val: r.irr == null ? "#NUM!" : pct(r.irr), sub: "XIRR · " + r.days.toLocaleString() + " วัน", color: tone(r.irr) }
+  ];
+  const tw = (W - 2 * pad - 2 * gap) / 3;
+  tiles.forEach((t, i) => {
+    const x = pad + i * (tw + gap);
+    cardBox(g, x, y0, tw, kh, t.primary ? SET.brand : SET.card, t.primary ? null : SET.line);
+    const soft = t.primary ? "rgba(255,255,255,0.85)" : SET.muted;
+    g.textAlign = "left"; g.textBaseline = "alphabetic";
+    g.fillStyle = soft; g.font = "400 15px " + F_BODY; g.fillText(t.lbl, x + 20, y0 + 32);
+    fitFont(g, t.val, tw - 40, 36, "600", F_DISPLAY); g.fillStyle = t.primary ? "#ffffff" : t.color; g.fillText(t.val, x + 20, y0 + 80);
+    g.fillStyle = soft; g.font = "400 14px " + F_BODY; g.fillText(t.sub, x + 20, y0 + 108);
+  });
+  // chart card + summary card
+  const cw1 = Math.round((W - 2 * pad - 20) * 0.56), cw2 = W - 2 * pad - 20 - cw1, x2 = pad + cw1 + 20;
+  const title = (text, x) => { g.textAlign = "left"; g.textBaseline = "alphabetic"; g.fillStyle = SET.muted; g.font = "500 14px " + F_DISPLAY; g.fillText(text, x + 20, y1 + 34); };
+  cardBox(g, pad, y1, cw1, ch, SET.card, SET.line); title("สะพานมูลค่าพอร์ต", pad);
+  drawBridge(g, pad + 16, y1 + 50, cw1 - 32, ch - 66, a, r);
+  cardBox(g, x2, y1, cw2, ch, SET.card, SET.line); title("ตารางสรุปผลตอบแทน", x2);
+  const rows = summaryRows(a, r), rowH = Math.floor((ch - 56 - 20) / rows.length);
+  drawSummary(g, x2 + 16, y1 + 56, cw2 - 32, rowH, rows);
   return toBlob(c);
 }
-function savePng(blob, kind) {
+function savePng(blob) {
   const v = state.view, url = URL.createObjectURL(blob), link = document.createElement("a");
-  link.href = url; link.download = "Performance_" + (kind === "chart" ? "chart" : "summary") + "_" + (v ? v.a.acct.replace(/[^\w\-]+/g, "") : "") + ".png";
+  link.href = url; link.download = "Performance_summary_" + (v ? v.a.acct.replace(/[^\w\-]+/g, "") : "") + ".png";
   document.body.appendChild(link); link.click(); link.remove(); setTimeout(() => URL.revokeObjectURL(url), 4000);
 }
-function copyImage(kind) {
+function copyImage() {
   const v = state.view; if (!v || !v.r.ok) { toast("กรอกมูลค่าพอร์ต ณ วันเริ่มต้นและวันสิ้นสุดก่อน"); return; }
-  const make = () => (kind === "chart" ? chartPng(v.a, v.r) : tablePng(v.a, v.r));
-  const fallback = () => make().then((b) => { savePng(b, kind); toast("คัดลอกลงคลิปบอร์ดไม่ได้ในเบราว์เซอร์นี้ เลยบันทึกเป็นไฟล์ PNG แทน"); }).catch((e) => toast(e.message || String(e)));
+  const make = () => setPng(v.a, v.r);
+  const fallback = () => make().then((b) => { savePng(b); toast("คัดลอกลงคลิปบอร์ดไม่ได้ในเบราว์เซอร์นี้ เลยบันทึกเป็นไฟล์ PNG แทน"); }).catch((e) => toast(e.message || String(e)));
   if (!(navigator.clipboard && navigator.clipboard.write && window.ClipboardItem)) { fallback(); return; }
   try {
     const item = new ClipboardItem({ "image/png": make() });
@@ -1011,7 +1047,7 @@ $("rules").addEventListener("change", (e) => {
 $("cf").addEventListener("click", (e) => { const tr = e.target.closest("tr.day"); if (!tr) return; const d = +tr.dataset.day; state.openDays.has(d) ? state.openDays.delete(d) : state.openDays.add(d); render(); });
 $("cf").addEventListener("keydown", (e) => { if (e.key !== "Enter" && e.key !== " ") return; const tr = e.target.closest("tr.day"); if (!tr) return; e.preventDefault(); const d = +tr.dataset.day; state.openDays.has(d) ? state.openDays.delete(d) : state.openDays.add(d); render(); const again = document.querySelector('tr.day[data-day="' + d + '"]'); if (again) again.focus(); });
 $("dlBtn").addEventListener("click", download);
-document.querySelectorAll("[data-copy]").forEach((b) => b.addEventListener("click", () => copyImage(b.dataset.copy)));
+$("copyBtn").addEventListener("click", copyImage);
 $("basis").addEventListener("change", (e) => { phillipBasis = e.target.value; try { localStorage.setItem(BASIS_KEY, phillipBasis); } catch (err) { /* ignore */ } rebuildTxns(); state.openDays.clear(); render(); });
 
 if ("launchQueue" in window) {
