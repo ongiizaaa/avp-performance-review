@@ -1,6 +1,6 @@
-# Static site: no build step on Netlify. site/ is committed already built (python3 tools/build.py).
+# Legacy Netlify config (site now served from GitHub Pages, folder docs/).
 [build]
-  publish = "site"
+  publish = "docs"
   command = ""
 
 [[headers]]

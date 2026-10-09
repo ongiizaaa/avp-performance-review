@@ -1,6 +1,6 @@
 """Build AVP Performance Review.
 
-    python3 tools/build.py            -> site/index.html + site/sw.js (Netlify, offline-capable PWA)
+    python3 tools/build.py            -> docs/index.html + docs/sw.js (GitHub Pages, offline-capable PWA)
     python3 tools/build.py --artifact -> dist/artifact.html (Claude artifact version, libraries from cdnjs)
 
 src/app.html is the single source for the app: markup, styles and script.
@@ -47,10 +47,10 @@ def build_site(ver):
     sw = ('<script>if ("serviceWorker" in navigator && location.protocol.startsWith("http")) '
           'window.addEventListener("load", () => navigator.serviceWorker.register("sw.js").catch(() => {}));</script>\n')
     html = head + head_part + "\n</head>\n<body>\n" + body_part.strip() + "\n" + sw + "</body>\n</html>\n"
-    (ROOT / "site" / "index.html").write_text(html, encoding="utf-8")
+    (ROOT / "docs" / "index.html").write_text(html, encoding="utf-8")
     sw_src = (ROOT / "tools" / "sw.template.js").read_text(encoding="utf-8").replace("__VERSION__", ver)
-    (ROOT / "site" / "sw.js").write_text(sw_src, encoding="utf-8")
-    print("site/index.html", len(html.encode()), "bytes · version", ver)
+    (ROOT / "docs" / "sw.js").write_text(sw_src, encoding="utf-8")
+    print("docs/index.html", len(html.encode()), "bytes · version", ver)
 
 def build_artifact(ver):
     out = ROOT / "dist"; out.mkdir(exist_ok=True)

@@ -3,7 +3,7 @@
 เว็บแอปคำนวณผลตอบแทนพอร์ตกองทุนลูกค้า (XIRR และผลตอบแทนถ่วงน้ำหนักต้นทุนตามเวลา) จากไฟล์รายการซื้อขายของกรุงศรีและฟิลลิป
 แล้วสร้างไฟล์ Excel ตาม template "Performance Review"
 
-- ใช้งาน: https://avp-performance-review.netlify.app (ติดตั้งเป็นแอปได้จาก Chrome หรือ Safari)
+- ใช้งาน: https://ongiizaaa.github.io/avp-performance-review/ (ติดตั้งเป็นแอปได้จาก Chrome หรือ Safari)
 - ไฟล์ลูกค้าถูกอ่านในเบราว์เซอร์เท่านั้น ไม่มีการอัปโหลด และแอปไม่เก็บข้อมูลลูกค้า
 
 ## โครงสร้าง
@@ -13,14 +13,14 @@
 | `src/app.html` | ต้นฉบับของแอป (หน้าจอ, สไตล์, สคริปต์) แก้ที่นี่ที่เดียว |
 | `src/template-base.xlsx` | template Performance Review ที่ล้าง external link แล้ว แอปเติมข้อมูลลงไฟล์นี้ |
 | `src/template-static.json` | ข้อความและ style id คงที่ของ template |
-| `tools/build.py` | สร้าง `site/index.html` และ `site/sw.js` จาก `src/` |
-| `site/` | ไฟล์ที่ Netlify เผยแพร่ (commit ไว้แล้ว ไม่มีขั้น build บน Netlify) |
+| `tools/build.py` | สร้าง `docs/index.html` และ `docs/sw.js` จาก `src/` |
+| `docs/` | ไฟล์ที่ GitHub Pages เผยแพร่ (commit ไว้แล้ว ไม่มีขั้น build) |
 
 ## การอัปเดต
 
 1. แก้ `src/app.html`
 2. `python3 tools/build.py`
-3. commit และ push ไปที่ `main` แล้ว Netlify จะ deploy ให้อัตโนมัติ
+3. commit และ push ไปที่ `main` แล้ว GitHub Pages จะอัปเดตเว็บให้อัตโนมัติ
 
 ## กติกาการคำนวณ (ตรงกับ template เดิม)
 

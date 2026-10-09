@@ -3,16 +3,17 @@
 Owner: อ๋อง (financial planner, Avenger Planner). Talk to him in Thai.
 
 ## What this is
-Static web app (PWA) at https://avp-performance-review.netlify.app that turns Krungsri / Phillip
+Static web app (PWA) at https://ongiizaaa.github.io/avp-performance-review/ that turns Krungsri / Phillip
 fund-transaction exports into his "Performance Review" Excel template (XIRR + time-weighted return).
-Netlify project `avp-performance-review` (team `twish-ong`) is linked to this repo: every push to
-`main` deploys automatically. He wants every change deployed this way — after editing, always
-build, test, commit and push to `main`; do not hand him files to upload.
+Hosting: GitHub Pages, "Deploy from a branch" = `main` / `docs` — every push to `main` publishes.
+(It moved off Netlify on 2026-10-09 because his free Netlify credits ran out; the old
+avp-performance-review.netlify.app copy is frozen.) He wants every change deployed this way —
+after editing, always build, test, commit and push to `main`; do not hand him files to upload.
 
 ## How to change it
-1. Edit `src/app.html` (single source: markup, CSS, JS). Do not hand-edit `site/index.html` or `site/sw.js`.
-2. `python3 tools/build.py` regenerates `site/index.html` + `site/sw.js` (new version stamp each build).
-3. Test before pushing (headless Chromium is at /opt/pw-browsers): load `site/` over a local HTTP
+1. Edit `src/app.html` (single source: markup, CSS, JS). Do not hand-edit `docs/index.html` or `docs/sw.js`.
+2. `python3 tools/build.py` regenerates `docs/index.html` + `docs/sw.js` (new version stamp each build).
+3. Test before pushing (headless Chromium is at /opt/pw-browsers): load `docs/` under a sub-path (it is served from /avp-performance-review/) over a local HTTP
    server, drop sample exports, check the KPIs, download the Excel, and recalc it with LibreOffice
    (`soffice --headless --convert-to xlsx`) to confirm cached formula values match.
 4. Commit with a short Thai/English message and push to `main`. Tell him the new version stamp
